@@ -1,6 +1,6 @@
 # Working method
 
-Six skills that change how an agent arrives at an answer, not what it does with
+Seven skills that change how an agent arrives at an answer, not what it does with
 one.
 
 The failure these address is upstream of any particular bug. An agent asked to
@@ -22,6 +22,7 @@ default reflex with a cheaper, more reliable one.
 | [`effective-refactor`](effective-refactor/) | Hand-editing the same change into many files |
 | [`fast-tests`](fast-tests/) | Tolerating a slow test loop, or faking the verify to speed it up |
 | [`using-a-debugger`](using-a-debugger/) | Reading code to guess a runtime value |
+| [`filing-issues`](filing-issues/) | Filing an issue per sighting, or filing what you could fix |
 
 The common shape: **observe rather than infer**. A spike beats doc-divination,
 a debugger beats reading, a search beats recall, and a real integration test
