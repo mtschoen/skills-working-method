@@ -92,10 +92,11 @@ branch onto the protected main.
   literal, the vacuous assertion, and the untracked retry marker are the natural
   additions beside them.
 - **Runtime guards** belong in the project's shared test configuration as autouse
-  fixtures, with a documented marker for the tests that legitimately opt out. Those
-  markers double as the integration-tier classification, so one mechanism does two jobs:
-  it stops an accidental real socket or real process, and it keeps the deliberate ones
-  out of the per-change gate.
+  fixtures, with a documented marker for the tests that legitimately opt out. Keep
+  resource opt-outs decoupled from tier classification: the marker authorizes the
+  resource use, but tiering remains governed by measured duration and reliability.
+  A cheap, deterministic test with an opt-out marker belongs in the per-change gate,
+  not automatically demoted to a slower tier.
 
 ## What a check can never do
 

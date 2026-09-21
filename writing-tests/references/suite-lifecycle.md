@@ -124,7 +124,10 @@ parametrizing is not the same as merging N assertions into one test.
 - An exact duplicate of another test.
 - A case subsumed by a parametrized test that now includes it.
 - A test asserting an implementation detail that no longer exists.
-- A vacuous test (asserts a literal truth, or only that a call did not raise).
+- A vacuous test (asserts a literal truth, or exercises code without an assertion
+  when completing without error is not the intended contract). Do not confuse this
+  with tests where not raising is itself the observable contract, such as accepting
+  valid input or preventing a regression.
 - A test whose subject was deleted.
 
 ### When deletion is wrong
