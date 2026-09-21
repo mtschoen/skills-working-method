@@ -1,6 +1,6 @@
 ---
 name: fast-tests
-description: "Use when the agent observes slow test runs in this session (multi-minute wall clock, repeated re-runs blocking iteration, tests dominating the inner loop, thousands of subprocess spawns, coverage/instrumentation overhead) OR when adding tests likely to slow the loop down (integration tests, sleeps/timeouts, external services, fixture-heavy setup). Steers toward fast integration-test loops by speeding up SETUP - never by replacing integration tests with unit mocks that fake the verify. Project-agnostic; per-language references for Python, JVM, .NET."
+description: "Use when the agent observes slow test runs in this session: multi-minute wall clock, repeated re-runs blocking iteration, tests dominating the inner loop, thousands of subprocess spawns, or coverage/instrumentation overhead. Do not use merely because a test being authored is an integration test or involves sleeps, timeouts, external services, or fixture-heavy setup; writing-tests owns authoring until measured slowness blocks the loop."
 ---
 
 # Fast Tests
@@ -15,13 +15,14 @@ This skill reinforces that bias and gives the agent techniques to make integrati
 
 - You're in a session and the test run wall clock is multi-minute - every fix-and-rerun cycle is blocked by waiting.
 - Repeated re-runs are dominating the inner loop: you fix one thing, re-run, wait, fix another, re-run, wait.
-- You are about to add tests that carry the slow-loop risk shape:
-  - Integration tests spinning up real services, databases, or browsers
-  - Tests with explicit `sleep()` or timeout-driven assertions
-  - Tests that hit external services or require network access
-  - Tests with heavy fixture setup (schema migrations, large datasets, full app wiring)
+- Profiling shows integration tests spinning up real services, databases, or browsers are
+  blocking the loop.
+- Profiling shows explicit `sleep()`, timeout-driven assertions, external services, network
+  access, or heavy fixture setup dominates the loop.
 
-If the test loop is fast and you're not adding anything likely to break that, don't invoke this skill - just test.
+If the test loop is fast, do not invoke this skill merely because a test being authored has one
+of those risk shapes. `writing-tests` owns that authoring decision; return here if measurement
+shows that the resulting loop is slow.
 
 ## When NOT to use
 
@@ -272,10 +273,10 @@ emulator-specific shortcut, or swapping a real component for a mock just to skip
 that's not a fast-tests technique - that's a hack.
 Escalate, don't ship.
 
-**`superpowers:test-driven-development`** - upstream.
-Fast-tests assumes tests exist and are the right tests.
-Decisions about *what* to test and *how* to structure tests belong to TDD.
-Fast-tests picks up after the tests are in place and the loop is slow.
+**`writing-tests` and `superpowers:test-driven-development`** - upstream.
+`writing-tests` owns the authoring moment, including integration tests, sleeps, timeouts,
+external services, and fixture-heavy setup. Test-driven development owns what to test and the
+red-green sequence. Fast-tests picks up only after measured slowness blocks the loop.
 
 **`superpowers:dispatching-parallel-agents`** - parallel fan-outs that share a persistent
 emulator or daemon need coordination.

@@ -4,7 +4,7 @@ A skill that steers agents toward fast integration-test loops without compromisi
 
 ## What it does
 
-`fast-tests` fires when an agent observes slow test runs in a session (multi-minute wall clock, repeated re-runs blocking iteration) OR is about to add tests likely to slow the loop down (integration tests, sleeps/timeouts, external services, fixture-heavy setup). It walks the agent through a profile-first decision tree, names the right lever per bottleneck shape, and explicitly rejects the "make this faster by mocking my own boundaries" anti-pattern.
+`fast-tests` fires when an agent observes slow test runs in a session (multi-minute wall clock or repeated re-runs blocking iteration). Authoring integration tests or tests involving sleeps, timeouts, external services, or fixture-heavy setup belongs to `writing-tests`; `fast-tests` picks up if measurement shows that the resulting loop is slow. It walks the agent through a profile-first decision tree, names the right lever per bottleneck shape, and explicitly rejects the "make this faster by mocking my own boundaries" anti-pattern.
 
 ## Install
 
@@ -44,6 +44,7 @@ Each reference holds Python / JVM / .NET sub-sections. Agents navigate by topic 
 ## Related skills
 
 - [`maintaining-full-coverage`](https://github.com/mtschoen/skills-maintaining-full-coverage) - orthogonal axis. Speed never licenses skipping tests.
+- `writing-tests` - upstream. It owns test authoring; fast-tests starts after measured slowness blocks the loop.
 - [`smoke-test`](https://github.com/mtschoen/skills-smoke-test) - orthogonal layer. Outer-loop verify vs. inner-loop wall clock.
 - [`escalate-over-shortcut`](https://github.com/mtschoen/skills-escalate-over-shortcut) - partner skill for when no fast-tests lever fits and the temptation is to ship a hack.
 - `superpowers:test-driven-development` - upstream. Fast-tests assumes tests exist.
