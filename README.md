@@ -1,6 +1,6 @@
 # Working method
 
-Eight skills that change how an agent arrives at an answer, not what it does with
+Nine skills that change how an agent arrives at an answer, not what it does with
 one.
 
 The failure these address is upstream of any particular bug. An agent asked to
@@ -23,6 +23,7 @@ default reflex with a cheaper, more reliable one.
 | [`writing-tests`](writing-tests/) | Widening a tolerance or a timeout instead of removing what the test cannot control |
 | [`fast-tests`](fast-tests/) | Tolerating a slow test loop, or faking the verify to speed it up |
 | [`using-a-debugger`](using-a-debugger/) | Reading code to guess a runtime value |
+| [`fixing-desktop-ui-bugs`](fixing-desktop-ui-bugs/) | Declaring a GUI bug attended-only, or driving the owner's desktop with synthetic input |
 | [`filing-issues`](filing-issues/) | Filing an issue per sighting, or filing what you could fix |
 
 The common shape: **observe rather than infer**. A spike beats doc-divination,
