@@ -4,9 +4,74 @@ Reaching 100 percent is not the hard part. Reaching it with a suite that stays s
 fast, and meaningful is. The two are in tension only if each uncovered line is answered
 with a new test function.
 
-`maintaining-full-coverage` owns the gate, the escalation ladder, and the report. This
-file owns the question it does not ask: **given that you must cover this line, what is
-the cheapest honest test that does it?**
+`maintaining-full-coverage` owns the gate, the escalation ladder, and the report, and
+sends you here for the rest: **given this uncovered line, what is the cheapest honest
+way to deal with it, and once the bar is met, what can the new tests be folded into?**
+
+The posture in one line: optimize for cost, hold coverage at 100 percent, report the
+count. No cap on the count, because a cap produces omnibus tests.
+
+## The authoring order
+
+For any new or uncovered line, take the first step that applies.
+
+1. **Should the line exist?** Delete it, and the tests that exist only for it, when
+   only a test would reach it.
+2. **Widen the nearest existing test**: one more assertion, or one more case.
+3. **A new case** in a parametrized test.
+4. **Only then a new test function.**
+
+### Step 1: production code only tests reach
+
+A 100 percent floor reports code no test reaches. It can never report code that *only*
+tests reach, because those tests keep it green. So this check is yours to make, on
+every uncovered line and on every line in your diff:
+
+| Shape | Why it survives a coverage gate | Move |
+| --- | --- | --- |
+| A helper whose only references are in the test tree | its own test covers it | delete the helper and the test |
+| A handler for an error the guarded code cannot raise | a test mocks the error into existence | delete the handler and the mocking test |
+| Two branches that do the same thing | one test each turns both green | collapse the conditional |
+| A defensive check for a state the callers cannot produce | a test constructs the impossible state | delete the check, or move it to the boundary where the state can arrive |
+| A parameter or option no production caller passes | a test passes it | delete the parameter |
+
+The search that settles it is for callers, not for coverage: find the references to
+the name outside the test tree. None means the code is dead to the product, whatever
+the report says. When you cannot tell whether a state is reachable, ask a human before
+you either test it or delete it.
+
+Scope: the lines your change adds, the lines the gate shows uncovered, and the
+functions you are changing. Test-only code you notice elsewhere is reported or filed,
+not swept into an unrelated change.
+
+### Steps 2 to 4: red-to-green without a new function
+
+Test-driven development asks for a failing test before the production change. What has
+to fail is an assertion under a test id you ran. Issue 412 says `normalize_path("logs/")`
+must return `"logs"`:
+
+```python
+@pytest.mark.parametrize(
+    ("raw_path", "expected"),
+    [
+        pytest.param("logs", "logs", id="plain"),
+        pytest.param("logs//app", "logs/app", id="double-separator"),
+        pytest.param("logs/", "logs", id="trailing-separator-issue-412"),
+    ],
+)
+def test_normalize_path(raw_path, expected):
+    assert normalize_path(raw_path) == expected
+```
+
+Run `test_normalize_path[trailing-separator-issue-412]`, watch it fail with the wrong
+value, fix the code, watch it pass. That is the whole red-green cycle, with zero new
+functions. The issue reference in the id is what makes the case a regression guard:
+`grep issue-412` finds it, and anyone who later reshapes the test can name the case
+that replaces it.
+
+A new function is right when the act is new: a different entry point, a different
+call, a different kind of outcome (a raise where the neighbors return). A different
+input to the same call is a case.
 
 ## Cover through the public seam
 
@@ -21,6 +86,25 @@ and with the property that the next refactor breaks zero of them instead of sixt
 The failure mode to watch for is the coverage report used as a worklist read
 line-by-line: "line 147 is red, write `test_line_147`". Read it as a *map* instead. A
 cluster of red lines usually means one untested path, not eight untested lines.
+
+A test that imports an underscore-prefixed name has left the seam. Either the caller's
+test can reach the same lines with one more case, or nothing in production calls the
+helper and step 1 applies.
+
+## Assert on outcomes, build with builders
+
+- **Outcome first.** Assert what the act produced: a return value, a raised error,
+  state a reader of the system could observe. An assertion that a mock was called is
+  acceptable only when the call *is* the observable effect: a message sent, a process
+  spawned, a documented polling contract. A test whose only assertion is
+  `collaborator.assert_called_once()` passes for any implementation that makes the
+  call, including a wrong one.
+- **Builders build state and never act.** Shared setup belongs in a builder or fixture
+  that returns the state a test starts from. The call to the code under test stays in
+  the test body. A fixture that performs the act hides the one line a reader needs, and
+  makes every test that uses it the same test.
+- **A real process only when the process is the subject.** Otherwise call the logic
+  in-process through a production seam (`SKILL.md`, pitfall 5).
 
 ## Parametrize as the default shape
 
@@ -56,24 +140,84 @@ Two properties to preserve when you do this:
 - **Keep the cases independent.** Parametrizing preserves one pass/fail signal per case.
   That is the whole point, and it is why parametrizing is not the same as merging.
 
-## Parametrize is not "collapse into one test"
+## The unit is the act
 
-The tempting next step is to fold N single-assertion tests into one test with N
-assertions. **Do not.** It destroys fault isolation: the first failing assertion masks
-the rest, so one regression hides the other N-1, and a failure report names the test
-rather than the case.
+What decides whether two tests are one test is the act: the call to the code under
+test, with its input.
 
-When N tests each assert one attribute on the same expensively-constructed object, the
-waste is the *construction*, not the test functions. Move construction into a shared
-fixture at the right scope and keep the N thin assertions. Node identifiers are
-unchanged, coverage is unchanged, and only the redundant rebuilding goes away.
+- **Same act, different input: cases.** One parametrized test, one id per input, one
+  pass/fail signal per id.
+- **Same act, same input, another fact about the outcome: one test.** N tests that
+  each repeat the identical call to assert one more attribute of its result are one
+  test with those assertions, or better, one comparison against the whole expected
+  value so a failure shows every difference at once.
+- **Different acts: different tests.** Never chain them. A test that acts, asserts,
+  then acts again hides the second act behind the first failure and is two tests.
+
+That boundary is what keeps consolidation from producing an omnibus test: several
+inputs or several acts pushed through one body, where the first failure masks the rest
+and the report names the test instead of the case.
 
 | Situation | Move |
 | --- | --- |
 | N tests differ by one input literal | one parametrized test, N cases, explicit identifiers |
-| N tests assert different attributes of the same object | one shared fixture, N thin tests |
-| N tests assert the same thing through different entry points | keep one, delete the rest, note why |
+| N tests perform the same act and assert different facts about its outcome | one test, one act, those assertions (or one whole-value comparison) |
+| N tests share expensive setup but perform different acts | one shared builder at the right scope, N tests |
+| N tests assert the same thing through different entry points | keep the one at the behavior's seam, delete the rest, note why |
 | N tests are byte-identical | one test; the rest are pure duplication |
+
+## The consolidation pass
+
+Run it when coverage reaches the bar, before declaring done, over the tests this change
+added. `maintaining-full-coverage` makes it a step of the completion gate. It is the
+refactor step of red-green-refactor applied to the tests.
+
+**1. List what you added.** New test functions, new cases, new builders. For each new
+function, ask which row it is:
+
+| What you see | Move |
+| --- | --- |
+| Same path as a sibling or an existing test, different input | fold into cases; use the existing parametrized neighbor if there is one |
+| Same act as an existing test, another fact about the outcome | add the assertion to that test |
+| Asserts only that a mock was called | rewrite to assert the outcome; drop it if another test already does |
+| Imports a private helper | move the check to the caller's seam, usually as a case |
+| Reaches production code nothing else calls | delete the code and the test |
+| None of the above | it stays; a new act earns a new function |
+
+**2. Prove nothing was lost.** These are the safe-deletion checks from
+`suite-lifecycle.md`, scoped to your change:
+
+- Coverage of the touched modules, at three decimals, is the same before and after.
+- For each distinct production line the folded cases guard, break that line and watch
+  the matching case go red, by its id. Prefer breaking the production line to
+  corrupting a case's literal: the first proves the case still guards the code, the
+  second only proves the case can fail. Restore at once: the break is a probe, not a
+  production change, so it needs no test of its own.
+- A regression case still goes red against the original broken behavior.
+
+**3. Record the delta** with the completion claim, in the message and the PR body:
+net-new test functions, net-new cases, test-line delta, all measured against the
+change's base (not against an intermediate state of your own work). A framework's test
+total counts cases, so it cannot show this; the delta can. Fewer test lines with coverage
+held is a good outcome. "Nothing to consolidate" is a valid result when every new
+function is a new act; say it, so the reader knows the pass ran.
+
+**Limits.** Each one marks where a consolidation has gone too far:
+
+- One act per test id.
+- A parametrize shares one assertion template. If the body branches on the case
+  (`if expected is None: ... else: ...`), it is two tests wearing one name.
+- Golden and contract values are never collapsed: documented API examples, boundary
+  and encoding cases, anything where the specific literal is the point.
+- Builders never act.
+- A regression case keeps its issue reference through every reshaping.
+
+Worked, for a change that added five separators to a date parser and wrote one test
+function per separator beside an existing two-case parametrized test: the five
+functions become five cases of the existing test (ids `dot`, `space`, `underscore`,
+`pipe`, `comma`). Corrupting the `pipe` literal turns exactly
+`test_parses_supported_date_formats[pipe]` red. Coverage is unchanged. Net-new test
+functions: 0. Net-new cases: 5.
 
 ## Property-style where the invariant is cheap to state
 
@@ -142,11 +286,11 @@ Symptoms:
 The test for whether a test earns its place: **name the bug it would catch.** If you
 cannot, it is not covering behavior, it is covering lines.
 
-When a line genuinely resists an honest test, the answer is upstream of the test.
-`maintaining-full-coverage` has the ladder: write the test, then restructure the
-production code so the line is reachable honestly, then ask a human (the line may be
-dead, and dead code is a bug, not an exception), and only then, with explicit approval,
-an exclusion. "Write a tick test" is not a rung on that ladder.
+When a line resists an honest test, the answer is upstream of the test. Start at step
+1 of the authoring order: a line no behavior needs is deleted, not covered.
+`maintaining-full-coverage` has the rest of the ladder: restructure the production code
+so the line is reachable honestly, then ask a human, and only then, with explicit
+approval, an exclusion. "Write a tick test" is not a rung on that ladder.
 
 ## Patch coverage versus total coverage
 
