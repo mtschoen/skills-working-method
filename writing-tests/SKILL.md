@@ -1,6 +1,6 @@
 ---
 name: writing-tests
-description: "Use when about to write, change, parametrize, or delete a test, fixture, or test double, including an integration test or one involving a real process, socket, external service, real home directory, heavy fixture setup, sleep, or timeout; when asserting on elapsed time, call counts, or clock-read order; when changing a flaky, intermittent, or transient test; when near-duplicate tests differ by one literal; or when deciding whether a test may be deleted under a coverage ratchet or test-removal gate. Do not use after measured test slowness is blocking the loop or for a suite-wide performance pass; fast-tests owns those."
+description: "Use when about to write, change, parametrize, or delete a test, fixture, or test double, including an integration test or one involving a real process, socket, external service, real home directory, heavy fixture setup, sleep, or timeout; when asserting on elapsed time, call counts, or clock-read order; when changing a flaky, intermittent, or transient test; when near-duplicate tests differ by one literal; when coverage has just reached the bar and the tests the change added have not been consolidated; or when deciding whether a test may be merged or deleted under a coverage ratchet or test-removal gate. Do not use after measured test slowness is blocking the loop or for a suite-wide performance pass; fast-tests owns those."
 ---
 
 # Writing Tests
@@ -22,14 +22,16 @@ the clock, inject the bytes, run the subject in-process, fake the outcome you we
 waiting for.
 
 The second principle follows from the first: **a suite's cost is a design output, not
-a fact of nature.** Test count is made monotonic by good gates (a coverage ratchet, a
-removal gate, a regression test per fix all only add), so the suite grows without
-anything pushing back. The counterweight is a deliberate lifecycle: a budget, a
-census, and a sanctioned way to merge and delete.
+a fact of nature.** Optimize for cost, hold coverage at 100 percent, report the count.
+Good gates (a coverage ratchet, a removal gate, a regression guard per fix) only ever
+ask for more, so the suite grows unless every change pushes back: an authoring order
+that reaches for an existing test before a new one, a consolidation pass before
+declaring done, and a periodic census.
 
 ## When to use
 
-- Writing a test for new behavior, or a regression test for a fix you just made.
+- Covering new behavior, or guarding a fix you are about to make.
+- Coverage just reached the bar and you are about to declare done.
 - Writing or extending a fixture, a test double, or a fake.
 - Reaching for a real process, socket, device, clock, or home directory in a test.
 - Reaching for a number: a timeout, a tolerance, a sleep, a retry count, a call count.
@@ -42,13 +44,14 @@ census, and a sanctioned way to merge and delete.
 | --- | --- |
 | The inner loop is slow and you need to speed up setup, fixtures, parallelism, tiering | `fast-tests` |
 | Coverage percentage, lint findings, the report file, whether you may declare done | `maintaining-full-coverage` |
-| Whether to write the test before the code at all | `superpowers:test-driven-development` |
+| Whether a failing test comes before the code at all | `superpowers:test-driven-development` |
 | Confirming the product works after a change | `smoke-test` |
 | No honest test is reachable and you are tempted to fake one | `escalate-over-shortcut` |
 
-This skill sits between them: `test-driven-development` says write the test first,
-this skill says what makes it a good one, `fast-tests` says what to do when the loop
-is slow anyway, and `maintaining-full-coverage` decides whether you are done.
+This skill sits between them: `test-driven-development` says the failing test comes
+first, this skill says what shape it takes and where it goes, `fast-tests` says what to
+do when the loop is slow anyway, and `maintaining-full-coverage` decides whether you
+are done and sends you back here to consolidate before you say so.
 
 ## Before you write the test: four questions
 
@@ -62,15 +65,18 @@ Answer all four before typing. Each has a wrong default that costs later.
    the uncontrolled world is excluded. Prefer the public entry point of the unit over
    its internals (one honest test through the front door covers many lines), and prefer
    an injected collaborator over the real resource behind it. The wrong default is to
-   reach for the real thing because it is already there.
+   reach for the real thing because it is already there. An underscore-prefixed import
+   in a test is a prompt to test through the caller, or to question whether the helper
+   should exist.
 3. **In which tier?** Tier by measured duration and reliability, not by architectural
    label. A cheap, deterministic integration test belongs in the per-change gate. A
    slow or unreliable test belongs in a slower tier even if it is called a unit test.
    Real processes, networks, hardware, and clocks are risk signals to measure, not an
    automatic reason to schedule a test. `fast-tests` owns the tiering mechanics.
-4. **Does a test already cover this?** Search for the behavior, not the function name.
-   If a near-identical test exists, extend it or parametrize it. A new file with one
-   more near-duplicate is the single largest source of suite growth.
+4. **Which existing test is nearest?** Search for the behavior, not the function name,
+   then follow the authoring order below: an assertion or a case added to that test
+   comes before a new function. A new function with one more near-duplicate body is the
+   single largest source of suite growth.
 
 ## The pitfall catalogue
 
@@ -167,61 +173,123 @@ This ties straight into the lifecycle section. Real spawns dominate the slow tai
 deleting an unnecessary spawn is simultaneously the robustness fix and the largest
 single wall-time win available.
 
-## Full coverage with fewer, better tests
+## Full coverage at the lowest honest cost
 
 100 percent is reachable with a small suite. It is usually reached with a large one
-because each uncovered line gets its own test instead of a wider path through the
-front door.
+because each uncovered line gets its own test function instead of a wider path through
+the front door. There is no cap on test count, because a cap produces omnibus tests.
+The pressure comes from the order in which you reach for things, and from a pass over
+your own tests before you stop.
 
-- **Test through the public seam.** One test that drives a real path covers many lines
+### The authoring order
+
+For any new or uncovered line, take the first step that applies.
+
+1. **Should the line exist?** If only a test would reach it (an internal helper verified
+   unreachable and not an external API, framework hook, callback, or dynamic dispatch;
+   a handler for an error the guarded code cannot raise; a branch that does what the other
+   branch does), delete it and the tests that exist only for it. Absent local references
+   are a candidate only: always exclude supported public API surface and dynamic hooks.
+   A 100 percent floor can never flag this code: the tests that reach it keep it green.
+2. **Widen the nearest existing test.** The test that already performs this act at the
+   behavior's seam takes one more assertion, or its parametrize takes one more case.
+3. **A new case** in a parametrized test, when the path is the same and the input
+   differs.
+4. **Only then a new test function**, when the act itself is new.
+
+### Red-to-green is a failing assertion
+
+`superpowers:test-driven-development` requires a failing test before production code.
+What has to fail is an assertion, under a test id you ran and watched go red for the
+right reason. A new parametrize case does that: add the case, run its id, watch it
+fail, make the change, watch it pass. So does a new assertion in an existing test.
+Neither needs a new function, and both satisfy the iron law in full.
+
+**A regression guard is by default a case whose id carries the issue reference**
+(`id="trailing-separator-issue-412"`). The provenance stays greppable, and a later
+consolidation can name the guard's replacement.
+
+### The shape of each test
+
+- **Test at the behavior's seam.** One test that drives a real path covers many lines
   honestly. Ten tests that each poke one internal cover the same lines and pin the
-  internals in place, so the next refactor breaks ten tests that were never about the
-  behavior.
-- **Parametrize by default.** The consolidation trigger is mechanical: two or more
-  tests whose bodies differ by one literal are one parametrized test.
+  internals in place.
+- **Assert on outcomes.** An assertion that a mock was called is acceptable only when
+  the call is the observable contract (a message sent, a process spawned, a documented
+  polling or cleanup contract like an exactly-once close).
+- **Setup lives in shared builders that build state and never act.** The act stays in
+  the test body, where a reader can see it.
+- **A real process only when the process is the subject** (pitfall 5).
+- **Parametrize by default.** Tests whose bodies differ by a literal are one
+  parametrized test with explicit case ids.
 - **Property-style where the invariant is cheap to state** (round-trips, idempotence,
-  ordering, conservation). One property replaces a table of examples and finds the
-  case you did not think of.
-- **Coverage cannot see assertion strength.** In one unpublished 318-test-package
-  anecdote, not a general benchmark:
-  deleting one real test at a time changed line coverage by exactly 0.000 percent in
-  10 of 12 sampled cases. A test asserting a precise value and a test asserting
-  nothing cover identical lines. So "coverage did not drop" is never, on its own,
-  evidence that no test value was lost.
+  ordering, conservation).
 - **The one-line tick test is the anti-pattern.** A test written only so a line turns
-  green (and its degenerate form, a long narrative ending in a vacuous assertion) adds
-  count, wall clock, and maintenance surface while asserting nothing. Delete it and
-  re-verify: if coverage drops, its setup was accidentally covering something, so
-  write a real assertion rather than restoring the no-op.
+  green asserts nothing. Go back to step 1 of the authoring order for that line.
 
-Details and worked cases: `references/coverage-without-bloat.md`.
+### The consolidation pass
+
+When coverage reaches the bar, and before declaring done, go back over the tests this
+change added. `maintaining-full-coverage` requires this as a step of its completion
+gate. Finding nothing to consolidate is a normal result; say so.
+
+| What you see in your new tests | Move |
+| --- | --- |
+| Same path, different input | cases of one parametrized test, in the existing neighbor if there is one |
+| Same act as an existing test, another fact about the outcome | add the assertion to that test |
+| Asserts only that a mock was called for an incidental interaction | rewrite to assert the outcome, or drop it; retain observable call-contract assertions (cleanup, messaging, protocol) unless a named surviving assertion guards the same contract |
+| Imports a private helper | move the check to the caller's seam |
+| Reaches production code verified internally unreachable (candidate from absent local callers; exclude supported external APIs/options, framework hooks, callbacks, and dynamic dispatch) | delete the code and the test |
+
+Then prove nothing was lost, using the safe-deletion checks in
+`references/suite-lifecycle.md`: coverage of the touched modules is unchanged at three
+decimals, breaking the guarded line turns the surviving case red, and any observable
+call contract (such as exactly-once cleanup) is preserved under a named surviving assertion.
+
+Limits, so consolidation does not become the next problem:
+
+- One act per test id. A test that acts, asserts, then acts again is two tests.
+- A parametrize shares one assertion template. A body that branches on the case is two
+  tests.
+- Golden and contract values are never collapsed: there the specific literals are the
+  point.
+- Builders never act.
+- A regression case keeps its issue reference.
+
+Report the result with the completion claim: net-new test functions, net-new cases,
+and the test-line delta. Fewer test lines with coverage held is a good outcome, and a
+reviewer should read it as one.
+
+Worked cases and the full pass: `references/coverage-without-bloat.md`.
 
 ## Suite lifecycle
 
-Nothing else in the testing toolchain pushes back on growth. One real suite went from
-about 5,500 to about 12,300 tests in six weeks with every gate green throughout.
+The per-change order and pass above keep a change from adding more than it needs. The
+census catches what accumulated anyway. One real suite went from about 5,500 to about
+12,300 tests in six weeks with every gate green throughout.
 
-- **Budget per tier and per test.** Fixed per-test overhead is real and measurable
-  (about 3.3 ms per test in one profiled suite, so 12,000 tests cost roughly 40
-  seconds before a single assertion runs). Write the budget down; an unwritten budget
-  is never exceeded and never met.
+- **Prune by cost.** Cost concentrates in the slow tail: in one profiled suite the
+  slowest 5 percent of tests were 48 percent of wall clock. Executed item count still
+  matters through per-item runner overhead (about 3.3 ms per test item there, so 12,000
+  executed items cost roughly 40 seconds before assertions run), while function count
+  affects collection time and maintenance surface. Folding functions into parametrized
+  cases reduces maintenance surface and module collection overhead, but preserves
+  per-item execution overhead unless repeated acts, setups, or spawns are actually
+  reduced.
 - **Measure before optimizing.** `--durations`, a per-test cost census, and the
-  setup/call/teardown phase split. In one profiled suite the cost was 93.6 percent
-  inside test bodies and 3.4 percent in fixtures. Treat that as a reason to measure
-  locally, not as a general fixture-cost ratio.
-- **Attack the measured tail.** In that same suite the slowest 5 percent of tests were
-  48 percent of wall clock; tests under 10 ms were 56 percent of the count and 6 percent
-  of the time. The local profile, not those anecdotal ratios, decides the opportunity.
+  setup/call/teardown phase split. The local profile, not another suite's ratios,
+  decides the opportunity.
+- **Budget per tier, written down.** An unwritten budget is never exceeded and never
+  met.
 - **Track growth as a number.** Test count and suite wall clock, recorded each census,
-  with the delta since last time. A ratchet that only goes up needs a number that
-  someone looks at.
-- **Deleting is sometimes right.** Legitimate cases: an exact duplicate; a case
-  subsumed by a parametrized test that now includes it; a test asserting an
-  implementation detail that no longer exists; a vacuous test. Safe removal under a
-  coverage ratchet and a removal-acknowledgement gate means all three of: coverage
-  verified still at the bar after removal (verified, not assumed), the removal
-  acknowledged with a written reason, and, if the test guarded a fixed bug, the
-  replacement that still guards it named explicitly.
+  with the delta since last time.
+- **Deleting is sometimes right.** An exact duplicate; a case subsumed by a
+  parametrized test that now includes it; a test of an implementation detail or of
+  production code that no longer exists; a vacuous test. "Coverage did not drop" is
+  never the whole argument: coverage cannot see assertion strength, and deleting a real
+  test changed line coverage by exactly 0.000 percent in 10 of 12 sampled cases in one
+  package. A guard for a fixed bug may be reshaped, never dropped: its named replacement
+  must still go red against the original broken behavior.
 - **Run a periodic census** as a maintenance task, not as a crisis response.
 
 Full procedure, census contents, and the merge-versus-delete decision:
@@ -242,10 +310,15 @@ Under a minute, on the tests in your diff.
 4. Could any test write to a **real home directory or a live config**? Check the
    resolver, not the one filename you know about.
 5. Is any fake driven by **how many times** it was called rather than by state?
-6. For a bugfix: did you watch the regression test **fail on the broken code** and pass
-   on the fix? State both.
-7. Is any new test a **near-duplicate** of one already in the file? Parametrize instead.
-8. Did the suite's **test count and wall clock** move more than you expected?
+6. For a bugfix: did you watch the regression guard (by default a case with the issue
+   reference in its id) **fail on the broken code** and pass on the fix? State both.
+7. Did every new test function survive the **authoring order**? If an existing test
+   performs the same act, or differs by a literal, it is an assertion or a case there.
+8. Does any production line in the diff exist **only because a test reaches it**?
+   Verify internal unreachability (excluding supported external APIs, framework hooks,
+   callbacks, and dynamic dispatch) before deleting it.
+9. Have you run the **consolidation pass** and noted net-new test functions, net-new
+   cases, and the test-line delta?
 
 ## Rationalization table
 
@@ -260,6 +333,11 @@ Under a minute, on the tests in your diff.
 | "Asserting call_count is how I know it was used" | Assert what it produced unless the call pattern is itself documented behavior. Incidental call counts break when the code changes shape; contract-level polling or spawn counts are legitimate. |
 | "Our fake clock never touches real time, so we are fine" | A fake that decides by read count encodes the implementation's call pattern. Add one clock read elsewhere and the test silently stops exercising its branch, still green. |
 | "Adding a test is always safe" | Every test is permanent cost: wall clock, maintenance, and one more thing that breaks on the next refactor. A near-duplicate is a parametrize case, not a test. |
+| "TDD says every fix and every function needs its own test" | It says a failing test comes first. A new case that goes red before the change is a failing test, and a function reached through its caller's test is tested. |
+| "The helper is uncovered, so I will import it and test it directly" | Cover it through the caller. If no caller reaches it and it is not an external API, framework hook, callback, or dynamic dispatch, the helper is the candidate to delete. |
+| "Both branches need a test, the coverage tool says so" | If the branches do the same thing, or one defends against something that cannot happen, delete the branch. |
+| "Coverage is at 100 and everything is green, so I am done" | The bar is met; the cost is not yet settled. Run the consolidation pass over what you added. |
+| "Consolidating might lose something, safer to leave five tests" | The pass ends with a proof: coverage unchanged, and the surviving case goes red when the guarded line breaks. Five near-identical functions are the unsafe state. |
 | "I will mark it slow and move on" | A marker with no measurement is exclusion with extra steps. Tier by measured duration and by what the test touches. |
 | "We can fix the suite cost later, coverage matters more" | The gates make count monotonic. Nothing removes tests unless a person does. Later is when the number is twice as big. |
 
@@ -274,14 +352,19 @@ Under a minute, on the tests in your diff.
 - You are asserting on an incidental `call_count` or on the ordinal of a clock read.
 - You added a retry or a flaky marker before running the same input 10 times.
 - You are writing a test whose only purpose is to turn one line green.
+- You are writing a new test function while an existing test performs the same act.
+- A test imports an underscore-prefixed name from production code.
+- You are mocking a collaborator to raise an error it cannot raise in production.
+- A fixture or builder calls the function under test.
 - You are deleting a test and the whole argument is "coverage did not drop".
 - A new test file is near-identical to one that already exists.
+- You are about to say done and have not looked back over the tests you added.
 
 ## References
 
 - `references/pitfall-catalogue.md` - every shape in full, with the incident behind it.
 - `references/time-and-processes.md` - the five time shapes, real processes, and how to bound a genuine hang.
-- `references/coverage-without-bloat.md` - reaching the bar with fewer, higher-value tests.
+- `references/coverage-without-bloat.md` - the authoring order, red-to-green without a new function, and the consolidation pass, worked.
 - `references/suite-lifecycle.md` - budget, census, consolidation, safe deletion.
 - `references/machine-detection.md` - which pitfalls a guard can catch, detector designs, how to land one.
 
@@ -290,17 +373,28 @@ Under a minute, on the tests in your diff.
 **`fast-tests`** - adjacent, not overlapping. That skill fires on a slow loop and
 speeds up setup. This one fires at the moment a test is written and decides what the
 test depends on. They agree on the important thing: never buy speed by faking the
-verify. When this skill says "remove the spawn", the payoff is measured with
-`fast-tests` tooling.
+verify. When its profile shows redundant tests, it hands the folding and deleting to
+the procedure here. When this skill says "remove the spawn", the payoff is measured
+with `fast-tests` tooling.
 
-**`maintaining-full-coverage`** - downstream gate. It decides whether the numbers let
-you declare done. This skill decides whether the tests behind those numbers mean
-anything. Its restructure-over-exclude rule is the same lever applied to coverage that
+**`maintaining-full-coverage`** - downstream gate, and the link runs both ways. It
+decides whether the numbers let you declare done; this skill decides how a line gets
+covered and how the tests behind the numbers are consolidated. Its gate sends you here
+for both. Its restructure-over-exclude rule is the same lever applied to coverage that
 remove-the-dependency is applied to nondeterminism here.
 
 **`superpowers:test-driven-development`** - upstream. It owns "test first" and the
-red-green cycle. The bugfix corollary lives here: a regression test must be watched
-failing on the broken code, not merely written against the fixed code.
+red-green cycle, and nothing here relaxes it. Read its rules by what they protect:
+
+- "No production code without a failing test first": the failing test may be a new
+  case or a new assertion in an existing test, watched red and then green.
+- "Every new function/method has a test": a test reaches it through its caller's seam
+  and fails when the function is wrong.
+- "'and' in the name? Split it": one behavior per test id. Cases split by id, and one
+  act can carry several assertions about its outcome.
+- "Never fix bugs without a test": the issue-tagged case is that test, and it must be
+  watched failing on the broken code, not merely written against the fixed code.
+- Its refactor step covers test code too: the consolidation pass is that step.
 
 **`escalate-over-shortcut`** - when no honest test is reachable. Widening a tolerance,
 adding a retry, or marking a test skipped to get a green run is the shortcut it exists

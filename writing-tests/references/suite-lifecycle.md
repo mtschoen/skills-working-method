@@ -1,9 +1,11 @@
 # Suite lifecycle
 
 The part nothing else in the testing toolchain covers. Coverage gates, removal gates,
-and a regression-test-per-fix rule all push the test count in one direction. None of
-them ever removes a test. A suite under good gates is **monotonic by design**, and the
-only counterweight is a deliberate lifecycle.
+and a regression guard per fix all push the test count in one direction. None of them
+ever removes a test. A suite under good gates is **monotonic by design**, and the
+counterweight is deliberate: the authoring order and consolidation pass in every change
+(`coverage-without-bloat.md`), and the census and deletion procedure here for what
+accumulated anyway.
 
 ## Why this is not hypothetical
 
@@ -34,17 +36,23 @@ matters, not a benchmark to generalize to another repository:
 | Collection of the full suite | 30.5 seconds, before any test runs |
 | Processes: share of tests that spawn at all | 19.5 percent, averaging 8.6 spawns each |
 
-Four conclusions for that measured suite:
+Three conclusions for that measured suite:
 
-1. **Pruning cheap tests had little payoff there.** Deleting every test under 10 ms
-   would remove more than half the suite and 6 percent of the time. The tail held nearly
-   all of that suite's opportunity.
+1. **Cost concentrates in the slow tail, so prune by cost.** The slowest 5 percent held
+   48 percent of the wall clock; every test under 10 ms together held 6 percent. Wall
+   time is won in the tail. Executed item count matters through per-item runner overhead
+   (3.3 ms per test item is about 40 seconds across 12,000 executed items before a single
+   assertion runs), while function count affects collection time (30 seconds there)
+   and maintenance surface (every test function is one more thing the next refactor has
+   to carry). Distinguish fewer functions from fewer executed items: folding cheap
+   near-duplicates into parametrized cases saves maintenance surface and module collection
+   overhead, but preserves collected items, body executions, and function-scoped fixture
+   setups. Runtime savings come only from measured reductions in repeated acts, setup,
+   or spawns; it is not where the minutes are.
 2. **Fixtures were not the main cost there.** 93.6 percent of the cost was inside test
    bodies. Narrowing a set of autouse fixtures that summed to 3.3 ms per test would have
    been churn for under 1 percent.
-3. **Fixed overhead was a real budget line there.** At 3.3 ms per test, 12,000 tests
-   cost about 40 seconds before a single assertion runs, plus 30 seconds of collection.
-4. **Processes were concentrated there.** In the sample, two files held 97.7 percent
+3. **Processes were concentrated there.** In the sample, two files held 97.7 percent
    of all spawns, so those files were the useful target.
 
 ## The budget
@@ -104,18 +112,24 @@ Measure the slow tail before choosing a lever. Common causes include:
 
 ## Consolidation triggers
 
-Mechanical, so they do not need a judgment call:
+Mechanical, so they do not need a judgment call. They apply twice: in every change, as
+the consolidation pass over the tests that change added, and at the census, over the
+suite.
 
 | Trigger | Move |
 | --- | --- |
 | Two or more tests differing by one literal | one parametrized test with explicit case identifiers |
-| N tests each rebuilding the same expensive object | one shared fixture at the right scope, N thin tests |
+| Several tests performing the same act to assert different facts about its outcome | one test, one act, those assertions |
+| N tests each rebuilding the same expensive object for different acts | one shared builder at the right scope, N thin tests |
 | Several tests redundantly launch a process for the same contract | one real-process test for that contract; pure logic through a callable production seam |
-| The same setup block copy-pasted across files | one shared fixture, or a template built once and copied |
+| The same setup block copy-pasted across files | one shared builder, or a template built once and copied |
+| A test whose only assertion is that a mock was called for an incidental interaction | assert the observable outcome, or delete it; retain observable call-contract assertions (cleanup, messaging, protocol) unless a named surviving assertion guards the same contract |
+| A test that imports a private helper | cover the helper through its caller |
+| Production code referenced only from the test tree, verified internally unreachable and not supported external API surface, framework hooks, callbacks, or dynamic dispatch | delete the code and its tests |
 | A test whose name references a line or branch number | rewrite as a behavior test, or delete it |
 
-`references/coverage-without-bloat.md` has the worked before-and-after, including why
-parametrizing is not the same as merging N assertions into one test.
+`coverage-without-bloat.md` has the worked before-and-after, the pass itself, and the
+limits that stop a consolidation from becoming an omnibus test.
 
 ## Deleting a test: when it is right, and how to do it safely
 
@@ -128,12 +142,25 @@ parametrizing is not the same as merging N assertions into one test.
   when completing without error is not the intended contract). Do not confuse this
   with tests where not raising is itself the observable contract, such as accepting
   valid input or preventing a regression.
-- A test whose subject was deleted.
+- A test whose subject was deleted, including production code verified internally unreachable and not part of supported external API surface, framework hooks, callbacks, or dynamic dispatch.
 
 ### When deletion is wrong
 
-- The test traces to a bug-fix commit and is the regression guard for that bug, unless
-  a named replacement still guards it.
+- It would leave a fixed bug unguarded. A regression guard may be reshaped (typically
+  into a case of a neighboring parametrized test, with the issue reference in its id)
+  when the replacement is named and re-verified red against the original broken
+  behavior. It may not simply go.
+- It would remove an assertion that guards an observable call contract (such as an
+  exactly-once cleanup call like `resource.close.assert_called_once()`, a message emission,
+  or a documented polling protocol) without a named surviving assertion guarding that
+  exact contract. Unchanged line coverage and a surviving return-value assertion do not
+  prove interaction contracts survived: in a defect where cleanup runs twice or not at all,
+  a return-value assertion still passes while the cleanup contract fails.
+- Code has no local callers in the repository but forms part of a supported external API,
+  public option contract, framework lifecycle hook (such as dynamically dispatched HTTP or
+  event handlers like `do_GET`), callback, or dynamic dispatch table. Absent local
+  references make code a deletion candidate only; verification of internal unreachability
+  is required.
 - The literals are a golden or contract set where the specific values matter (documented
   API examples, boundary and encoding cases) rather than being "some value".
 - Collapsing it into a sibling would lose fault isolation, so a failure would no longer
@@ -143,8 +170,9 @@ parametrizing is not the same as merging N assertions into one test.
 
 ### The safe procedure under a coverage ratchet and a removal gate
 
-1. **Provenance first.** Check the history of each candidate. Anything tracing to a
-   bug fix is a regression guard and is governed by the rule above.
+1. **Provenance first.** Check the history of each candidate, and its id for an issue
+   reference. Anything tracing to a bug fix is a regression guard and is governed by
+   the rule above.
 2. **Do the change.**
 3. **Diff the node identifiers**, collect-only before and after. Every identifier that
    disappeared must be either on an explicit rename map (parametrizing is a rename, not
@@ -154,13 +182,21 @@ parametrizing is not the same as merging N assertions into one test.
    the bar. Verified, not assumed, and remember it is a necessary check, not a
    sufficient one.
 5. **Prove fault isolation survived.** Break each consolidated case one at a time
-   (corrupt one parametrized literal, one attribute) and confirm the specific case fails.
-   This is the check that separates a real consolidation from a coverage-preserving loss
-   of signal.
+   (break the production line the case guards, or corrupt one parametrized literal or attribute
+   if testing input handling) and confirm the specific case fails. Prefer breaking the
+   guarded production line: it proves the case still guards the code, whereas corrupting an
+   expected literal only proves the case can fail. This is the check that separates a real
+   consolidation from a coverage-preserving loss of signal.
 6. **For any regression-guard test being reshaped**, re-verify it still goes red against
    the original broken behavior.
 7. **Record the acknowledgement** with the old-to-new identifier mapping and a one-line
    reason.
+
+**For tests the current change added and nothing has merged yet** (the per-change
+consolidation pass), steps 1, 3 and 7 are empty: there is no history, and no gate has
+recorded the identifiers. Steps 4 to 6 are the proof, scoped to the touched modules:
+coverage unchanged, each surviving case red when its guarded line breaks, each
+regression case red against the original bug.
 
 ## The periodic census
 

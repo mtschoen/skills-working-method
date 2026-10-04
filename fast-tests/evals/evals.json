@@ -161,6 +161,24 @@
         "Response does NOT mention the test suite at all unless directly relevant to the endpoint design (and even then, only briefly)",
         "Response is action-oriented in the domain the user asked about (endpoint design), not in fast-tests territory"
       ]
+    },
+    {
+      "id": 10,
+      "name": "consolidate-redundant-tests",
+      "bucket": "lever",
+      "kind": "single-turn",
+      "mock_repo": "./workspace/mock_repo",
+      "prior_context": "Mid-session. The suite takes 6 minutes. You profiled it: 340 of the 900 tests live in tests/test_export.py, and each one starts the real export worker process (about 0.9 seconds each, roughly 5 of the 6 minutes). Reading the file shows 300 of those are separate test functions that run the same export call and differ only in one input row and one expected output line. Another 25 assert only that `worker_factory.assert_called_once()`. Coverage is at 100%.",
+      "user": "can we just fold those 300 into one parametrized test that starts the worker once per case group, and drop the mock-call ones? or is touching the tests off limits here?",
+      "assertions": [
+        "Response agrees that folding the redundant tests is a sanctioned lever - it does NOT refuse on the grounds that speed never licenses touching or removing tests",
+        "Response distinguishes removing redundancy (same behavior still asserted by fewer functions) from skipping tests, weakening assertions, or lowering coverage, which stay off limits",
+        "Response distinguishes fewer functions from fewer executed items: recognizes that folding 300 functions into a parametrized test preserves 300 item executions and per-item fixture setup, and attributes runtime savings only to measured reductions in repeated acts, amortized setup, or avoided spawns",
+        "Response notes that worker reuse across cases is conditional on supported multi-request semantics, per-case state isolation/reset, and cleanup, while preserving any fresh-process contract",
+        "Response hands the consolidation to the writing-tests procedure or names its proof steps: coverage verified unchanged, a surviving case shown to go red when its guarded production line is broken, regression guards kept by name",
+        "Response keeps one pass/fail signal per input (parametrized cases with ids) rather than proposing one omnibus test with a loop or many assertions",
+        "Response restricts mock-call deletion to incidental interactions, checking whether any of the 25 tests guard an observable call contract (e.g. factory or cleanup contracts) that must be retained unless guarded by a named surviving assertion"
+      ]
     }
   ]
 }

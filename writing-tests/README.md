@@ -12,9 +12,11 @@ Two principles run through it:
 - **Remove the dependency, do not enlarge the number.** A wider tolerance, a longer
   timeout, a retry, and a bumped sleep are the same move. Each makes a failure rarer
   without making the test deterministic.
-- **A suite's cost is a design output.** Coverage ratchets, removal gates, and a
-  regression-test-per-fix rule all only add tests. Nothing removes one unless a person
-  does, so growth needs a budget, a census, and a sanctioned way to merge and delete.
+- **A suite's cost is a design output.** Optimize for cost, hold coverage at 100
+  percent, report the count. Coverage ratchets, removal gates, and a regression guard
+  per fix only ever ask for more, so every change pushes back: an authoring order that
+  widens an existing test before adding a function, a consolidation pass before
+  declaring done, and a periodic census with a sanctioned way to merge and delete.
 
 Every pitfall in the catalogue states whether a machine can catch it and with what kind
 of check, because the durable version of a rule is a guard that runs whether or not
@@ -58,14 +60,14 @@ writing-tests/
   references/
     time-and-processes.md           the five time shapes, real resources, seams
     pitfall-catalogue.md            the remaining shapes, each with its incident
-    coverage-without-bloat.md       full coverage with fewer, higher-value tests
-    suite-lifecycle.md              budget, census, consolidation, safe deletion
+    coverage-without-bloat.md       authoring order, consolidation pass, worked cases
+    suite-lifecycle.md              budget, census, consolidation triggers, safe deletion
     machine-detection.md            which pitfalls a guard catches, and how to land one
 ```
 
 ## Related skills
 
-- [`maintaining-full-coverage`](https://github.com/mtschoen/skills-maintaining-full-coverage) - downstream gate. Meaningful tests remain subject to the coverage and lint bar.
+- [`maintaining-full-coverage`](https://github.com/mtschoen/skills-maintaining-full-coverage) - downstream gate. Meaningful tests remain subject to the coverage and lint bar, and its gate sends the agent back here for how to cover a line and for the consolidation pass.
 - [`smoke-test`](https://github.com/mtschoen/skills-smoke-test) - downstream layer. Test authoring does not replace product-level verification.
 - [`escalate-over-shortcut`](https://github.com/mtschoen/skills-escalate-over-shortcut) - partner skill for when no honest test is reachable and a skip or weakened assertion is tempting.
 - `superpowers:test-driven-development` - upstream. Writing-tests assumes the red-green sequence is already in progress.

@@ -130,6 +130,25 @@ fixture setup, teardown, or body.
    Regression-guard the win by asserting on spawn counts, not wall clock - counts are
    deterministic and load-independent.
 
+8. **Profile or census shows redundant tests (many tests through the same path differing by
+   one input, several tests repeating the same act, tests whose only assertion is that a mock
+   was called for an incidental interaction, tests of code verified internally unreachable)** → fold or delete them.
+   Removing a redundant test is not skipping a test: the behavior stays asserted, by fewer
+   functions.
+   Hand off to `writing-tests`, which owns the consolidation moves and the safe-deletion
+   procedure (`references/suite-lifecycle.md` there): coverage verified unchanged, the
+   surviving case shown to go red when its guarded line breaks, regression guards kept by
+   name.
+   Size the payoff honestly before starting: wall time is won in the slow tail.
+   Distinguish fewer functions from fewer executed items: folding N same-path functions
+   into one parametrized function reduces maintenance surface and module definition overhead,
+   but preserves N collected items, N body executions, and N function-scoped fixture setups.
+   Per-item harness overhead is not eliminated by the function-count delta alone.
+   Attribute runtime savings only to measured reductions in repeated acts, amortized
+   setup or fixture lifecycles, or avoided process spawns. Folding tests that each spawn a
+   process or rebuild heavy state pays in minutes only when the repeated spawn or setup
+   itself is eliminated.
+
 A note on levers that swap the measurement instrumentation itself (a coverage tracer core,
 a profiler mode): A/B the semantic OUTPUT as well as the wall clock.
 Run the suite both ways and diff the coverage report line-by-line before flipping anything a
@@ -140,7 +159,7 @@ a red gate.
 "Same results, just faster" is a claim to verify, not assume.
 
 If none of these branches fits and the slowness seems structural - the code's design makes cheap
-testing impossible without touching the assertions - the solution is to restructure the production
+testing impossible without weakening the assertions - the solution is to restructure the production
 code, not to exclude tests or weaken assertions (Principle 5).
 The coverage-side detail - restructuring away exclusions and unreachable branches - lives in `maintaining-full-coverage`.
 
@@ -170,8 +189,10 @@ The test body - the assertions, the interaction with the system under test - is 
 The expensive part is what happens before the first assertion: spinning up an emulator, running
 migrations, wiring a DI container, downloading a model.
 That's the target.
-If you're touching the assertion side or the coverage side to make the suite faster, you've left
-this skill's territory and entered the next failure mode.
+What speed never buys is a weaker assertion or a lower coverage number: if either would move,
+you've left this skill's territory and entered the next failure mode.
+Folding redundant tests moves neither, which is why it is a branch of the tree (8) and why it
+runs through the `writing-tests` procedure that proves so.
 
 **4. Tier by wall clock, not by unit-vs-integration.**
 
@@ -234,6 +255,8 @@ Full pattern, economics, and migration order: `references/verified-fakes.md`.
 | "Parallelism will fix everything" | Parallelism helps when CPU is the bottleneck. When the bottleneck is a single serialized setup step, parallel test workers all wait on the same thing. Profile first. |
 | "The tests are fast enough for now" | Fast enough for now means slow enough to defer. Write down the current wall clock. When it doubles - and it will - you'll be glad you had the number. |
 | "An in-process library version of the external tool is faster and still real" | It's a different implementation, so the tests now exercise the library's semantics, not the tool the product ships against. Use a verified fake with a contract suite, or keep the real tool. |
+| "Consolidating tests means touching tests, and speed never licenses that" | Speed never licenses weakening an assertion or dropping coverage. Folding five same-path tests into five cases, or deleting a test of code verified internally unreachable, does neither. Use the `writing-tests` procedure and show the proof. |
+| "This integration test is slow and a unit test covers the same lines, so it's redundant" | Redundant means the same behavior is still asserted at the same seam. Same lines through a mock is not that. The integration test is the authoritative signal; speed up its setup. |
 | "The instrumentation swap doesn't change results, just speed" | Tracer cores and profiler modes differ at the margins. Diff the semantic output (per-line coverage) both ways before flipping anything a gate reads. |
 
 ## References
@@ -251,9 +274,11 @@ Full pattern, economics, and migration order: `references/verified-fakes.md`.
 ## Integration notes
 
 **`maintaining-full-coverage`** - orthogonal axes.
-Speed never licenses skipping tests.
+Speed never licenses skipping a test, weakening an assertion, or lowering coverage.
 *Tiering* means "run less often in the dev inner loop," never "omit from the suite" - the full
 suite still runs in CI, pre-commit, and before claiming done; coverage stays 100%.
+Consolidating redundant tests is neither skipping nor tiering: its completion gate requires
+that pass on every change, and fewer test lines with coverage held is a good outcome.
 Both skills agree on restructure-over-exclude - `maintaining-full-coverage` carries the worked examples.
 Both reject mocking-owned-boundaries.
 If speed pressure is eroding coverage, that's a `maintaining-full-coverage` event, not a
@@ -275,8 +300,9 @@ Escalate, don't ship.
 
 **`writing-tests` and `superpowers:test-driven-development`** - upstream.
 `writing-tests` owns the authoring moment, including integration tests, sleeps, timeouts,
-external services, and fixture-heavy setup. Test-driven development owns what to test and the
-red-green sequence. Fast-tests picks up only after measured slowness blocks the loop.
+external services, and fixture-heavy setup, and it owns merging and deleting tests: branch 8
+hands off to it. Test-driven development owns what to test and the red-green sequence.
+Fast-tests picks up only after measured slowness blocks the loop.
 
 **`superpowers:dispatching-parallel-agents`** - parallel fan-outs that share a persistent
 emulator or daemon need coordination.
