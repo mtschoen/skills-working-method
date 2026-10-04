@@ -24,7 +24,7 @@ A resize afterwards did not recover it.
 
 ## In-process dump, before and after the reload
 
-```
+```text
 before  ScrollViewer 'ContentElement' actual=1588x241 desired=1586x238 va=Stretch viewportH=230
 after   ScrollViewer 'ContentElement' actual=1588x42  desired=43x44   va=Top     viewportH=31
 after   TextBox                       actual=1590x243 desired=0x0     minH=44
