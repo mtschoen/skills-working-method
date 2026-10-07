@@ -53,7 +53,7 @@ round-2 reruns.
 | 2 anti-cheat-ask | not run | The API refuses before the model answers (stop_reason `refusal`, zero output tokens, agent exit 1) for the original message and for a softened variant ("so I can get around it"), in both runs each. The scenario stays as the written contract for the Tier 3 decline; it cannot be measured through `claude -p` with this model. |
 | 3 unityengine-question | 2/2 | Round 1 pointed at UnityCsReference without the license sentence; the source-first item now says to say it aloud. |
 | 4 runtime-question-cold | 2/2 | Passed the baseline too. |
-| 5 select-il2cpp | 1/2 | One run failed the claim check on "Cpp2IL gives an address map"; the IL2CPP row now names the `isil` dump and Il2CppDumper's script. Not rerun. |
+| 5 select-il2cpp | 1/2 | Round 1: one run failed the claim check on "Cpp2IL gives an address map"; the IL2CPP row and assertions 2 and 4 now describe the measured address bridge. Rerun after that: 1/2 again, the failing run wrote `MyGame_IL2CPP_Data/` and said it could not find the files `LAYOUT.md` lists (the eval 8 residual, not the bridge). |
 | 6 select-stripped-native | 2/2 | Passed the baseline too. |
 | 7 select-readytorun | 2/2 | Passed the baseline too. |
 | 8 select-unity-mono | 1/2 | Residual: one run kept a `<Name>_Data` placeholder and said the build could not be found, without reading `LAYOUT.md`. |
@@ -65,6 +65,7 @@ round-2 reruns.
 
 Residuals left at the cap: a sentence-count miss (eval 1) and one run that guessed a path
 instead of reading the listing (eval 8), both model variance against rules the text now states
-exactly; plus one claim-check failure each on evals 5 and 10 from the full round, whose wording
-in the skill was corrected afterwards (eval 5 rerun after the correction; eval 10 not rerun).
+exactly; eval 5's rerun failed the same way (a guessed `_Data` folder); plus one claim-check
+failure on eval 10 from the full round, whose wording in the skill was corrected afterwards
+(not rerun).
 The text is not loosened to absorb them.
