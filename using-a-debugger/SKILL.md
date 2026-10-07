@@ -26,6 +26,9 @@ converging.
 ## When NOT to use
 
 - A one-line, obvious bug a single log line settles - just fix it.
+- A static question about a binary with no source ("what does this code do", "which version
+  shipped"): that is `using-a-decompiler`, which also decides whether the artifact is yours
+  to read. The debugger answers what happens at runtime.
 - This is the *tooling* arm, not the *process*. The thinking - reproduce, form a
   hypothesis, isolate - belongs to `superpowers:systematic-debugging`. Use that to decide
   *what* to investigate; use this skill to *observe* it. Do not aimlessly single-step.
