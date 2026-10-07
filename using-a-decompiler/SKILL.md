@@ -51,9 +51,10 @@ Boundaries:  <no redistribution; output stays in scratch; nothing committed; sto
 ```
 
 Then exactly one question: "Proceed with this?" If the EULA carries a no-reverse-engineering
-clause, say so in one or two sentences as information for the owner's decision (US and EU law
-carve out interoperability and error correction; see `references/when-to-decompile.md`), never as
-a refusal and never as a lecture. **The agent never starts a Tier 2 decompile on its own
+clause, say so in one sentence, two at most, as information for the owner's decision ("the EULA
+forbids reverse engineering except where law permits; error correction and interoperability are
+the carve-outs"); the legal detail stays in `references/when-to-decompile.md`, never in the reply,
+and never as a refusal or a lecture. **The agent never starts a Tier 2 decompile on its own
 initiative**: the owner's yes is the trigger, every time.
 
 Tier 1 is not Tier 2 in disguise. A lost git tag, a reimaged CI machine, or a missing pdb does
@@ -117,8 +118,9 @@ which files exist, not what is inside them. Facts about the binary come from the
 - Native quick look: one function with `objdump --disassemble=NAME`,
   `llvm-objdump --disassemble-symbols=NAME`, or `gdb -batch -ex "disassemble NAME"` before any
   whole-binary `dumpbin /DISASM` dump.
-- Unity: one type out of `<Name>_Data/Managed/Assembly-CSharp.dll`; take `<Name>_Data` from the
-  directory listing rather than guessing it. Say why no `-r` is needed: the UnityEngine reference
+- Unity: one type out of `<Name>_Data/Managed/Assembly-CSharp.dll`. Read the player folder (or
+  its listing file) and write the real folder name in the command; a `<Name>_Data` placeholder
+  or a "probably" in the answer is a guess, not a path. Say why no `-r` is needed: the UnityEngine reference
   assemblies sit in that same `Managed` folder, so resolution works from there (add
   `-r <Managed dir>` only if references come back unresolved).
 
