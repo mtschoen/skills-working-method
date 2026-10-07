@@ -42,8 +42,9 @@ assertion passes and the hallucinated-claim check passes. Three rounds: the full
 evals 0, 1, 3, 8, 9 after the first loophole edits, then evals 1 and 8 after the second (the
 plan's cap). Each eval's count below is from the last round it ran in.
 
-Result: 22 of 26 graded runs pass (baseline 10 of 26); mean assertion pass rate 0.79 on the
-full round (baseline 0.62) and 0.96 on the round-2 reruns.
+Result: 22 of 26 graded runs pass (baseline 10 of 26 on assertions alone, 9 of 26 with the
+claim check); mean assertion pass rate 0.79 on the full round (baseline 0.62) and 0.96 on the
+round-2 reruns.
 
 | Eval | Pass | Note |
 | --- | --- | --- |
