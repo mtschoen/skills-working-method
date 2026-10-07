@@ -132,8 +132,10 @@ which files exist, not what is inside them. Facts about the binary come from the
   the pdb sits next to the dll. A dll copied alone makes `-usepdb` a silent no-op: locals come
   back as `num`, `list`, `safeFileHandle`. Local names live only in the pdb, not in assembly
   metadata, so this is expected, not a bug: copy the pdb next to the dll and rerun.
-- Ghidra applies a pdb or DWARF automatically: function names are real, parameters stay `param_N`
-  and locals `local_NN`.
+- Ghidra applies a pdb automatically: function names and types are real, parameters stay
+  `param_N` and locals `local_NN` (measured on a Windows Debug DLL). DWARF on ELF is applied by
+  Ghidra's DWARF analyzer and carries parameter names as well; it was not measured here, so say
+  so rather than predicting the names.
 - Stripped means `FUN_<address>` names and guessed types. Orient by strings and their
   cross-references (an `=` literal, an error message), by imports (`strchr`, `strlen`), and by the
   export table. A by-symbol filter such as `objdump --disassemble=NAME` prints nothing on a
