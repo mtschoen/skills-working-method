@@ -61,8 +61,9 @@ not change whose code it is.
 At Tier 3, decline the decompile-and-patch step in one or two sentences, offer a permitted path
 (the vendor's allow-list or support channel, a mode the protection permits, the other tool's
 compatibility guidance), and carry on helping with everything else. No lecture, no speculation
-about consequences, no reporting, logging, flagging, or filing of the request anywhere. One
-decline is the whole response to that request; the conversation continues.
+about consequences, no reporting, logging, flagging, or filing of the request anywhere, and none
+of that said aloud either: the decline itself never mentions reporting or logging. One decline is
+the whole response to that request; the conversation continues.
 
 ## Output handling
 
@@ -70,7 +71,9 @@ Tier 2 output lives in scratch (the session scratchpad or a gitignored `workspac
 the repository, never pasted wholesale into an issue, a PR, a memory note, or a message to the
 vendor. Cite by symbol and offset: the type, the method, the field, the condition. Quote the
 minimum, a few lines at most, and say why the quote is minimal. A write-up names
-`FolderWatcher.OnRenamed` and the unassigned field; it does not carry the method body. Tier 1
+`FolderWatcher.OnRenamed` and the unassigned field; it does not carry the method body. Such a
+write-up, cited by symbol and condition, is not decompiled output and may be committed; the
+decompiled output itself stays in scratch. Tier 1
 output may be kept, but a whole-project decompile of the owner's own dll is still scratch; the
 source is the record.
 
@@ -103,7 +106,8 @@ bodies: the shape of `Combat.ApplyDamage`, never its logic. The logic is in Ghid
   `llvm-objdump --disassemble-symbols=NAME`, or `gdb -batch -ex "disassemble NAME"` before any
   whole-binary `dumpbin /DISASM` dump.
 - Unity: one type out of `Assembly-CSharp.dll`. The UnityEngine reference assemblies sit in the
-  same `Managed` folder, so resolution works from there without `-r`.
+  same `Managed` folder, so resolution normally works from there; add `-r <Managed dir>` if
+  references come back unresolved.
 
 ## Symbols decide readability
 
