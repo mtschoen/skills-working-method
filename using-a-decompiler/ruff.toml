@@ -1,0 +1,18 @@
+# Anchors ruff's config discovery at this repo. Without it, a run from inside a
+# skills-dev checkout resolves up to the umbrella's pyproject.toml, whose
+# `exclude` list drops every submodule - so ruff reports "No Python files found"
+# instead of what CI, which sees this repo alone, actually checks.
+line-length = 100
+
+# The mock repo is test data, not authored code: it is deliberately buggy, and
+# its shape is asserted on ("the bug is visible by reading the five-line
+# function" in evals.json). Reformatting it would rewrite the fixture.
+exclude = ["evals/fixtures/**"]
+
+[lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RET", "PIE", "C4", "RUF"]
+
+[lint.per-file-ignores]
+# The eval harness embeds prompt templates as string literals; rewrapping them
+# to satisfy the line limit would change the prompt the graders receive.
+"evals/**" = ["E501"]
