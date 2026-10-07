@@ -18,9 +18,10 @@ Source beats decompiled output every time. Before any tool, check in this order:
    DWARF beside the binary.
 3. A public repository for the library: the vendor's GitHub, a mirror, the distro's source package.
 4. UnityEngine or UnityEditor managed code: Unity's published C# reference source
-   (UnityCsReference on GitHub) at the tag matching the editor version. It is public under a
-   reference-only license that permits reading it to understand your own project. Native engine
-   code is not there; it shows as an `extern`.
+   (UnityCsReference on GitHub) at the tag matching the editor version. Say the reason in one
+   sentence when you point there: the managed source is public under a reference-only license
+   that permits reading it to understand your own project. Native engine code is not there; it
+   shows as an `extern`.
 5. .NET runtime and base library code: source.dot.net.
 6. Unity's Mono runtime: Unity's public mono fork on GitHub.
 
@@ -34,11 +35,13 @@ runtime question means no decompiler at all.
 
 | Tier | Artifact | What the agent does |
 | --- | --- | --- |
-| 1 | The owner's own build: a dll they shipped, their Mono or IL2CPP player, their native library, any build whose source they wrote, even with the tag or the pdb lost | Proceed. No permission, no justification, no legal note. |
+| 1 | The owner's own build: a dll they shipped, their Mono or IL2CPP player, their native library, any build whose source they wrote, even with the tag or the pdb lost | Proceed. No permission, no justification, no legal note, and no sentence explaining why it is allowed: go straight to the command. |
 | 2 | Third-party code the owner legitimately possesses: an installed vendor client, a dependency with no source, an installer, a file format their tool must read, Unity's native player or editor binaries | Write the justification below, ask one confirmation question, proceed on a yes. |
 | 3 | Defeating a protection mechanism (anti-cheat, license checks, DRM, tamper checks), lifting a competitor's proprietary algorithm, a leaked or pirated build, anything the owner does not legitimately possess | Decline once, plainly. See "Not an enforcer". |
 
-Tier 2 justification, four lines, written before the first command:
+Tier 2 justification, four lines, written before the first command. Read the directory listing
+first so `Target` names the actual file (`AcmeSync.Client.dll`, not "the AcmeSync assembly"),
+and name that same file in the command you propose:
 
 ```text
 Target:      <file and version, e.g. AcmeSync.Client.dll 4.2.1>
@@ -84,19 +87,28 @@ source is the record.
 | .NET assembly (`.dll`, `.exe`; ReadyToRun included) | `ilspycmd` | `dotnet il dasm` for one method's IL | `ilspycmd -l c X.dll` |
 | Native PE or ELF (`.dll`, `.so`, `.exe`; Native AOT) | Ghidra headless through `scripts/ghidra-decompile.py` | Ghidra GUI on one function | `llvm-objdump -p`, `dumpbin /EXPORTS`, `objdump -d --disassemble=NAME`, `gdb -batch` |
 | Unity Mono player | `ilspycmd` on `*_Data/Managed/Assembly-CSharp.dll` | `dotnet il dasm` | `ilspycmd -l c` |
-| Unity IL2CPP player | Cpp2IL on `GameAssembly.dll` plus `il2cpp_data/Metadata/global-metadata.dat` for stubs and addresses, then Ghidra on `GameAssembly.dll` | Il2CppDumper | `ilspycmd -t Type` on the recovered stubs (signatures only) |
+| Unity IL2CPP player | Cpp2IL on `GameAssembly.dll` plus `<Name>_Data/il2cpp_data/Metadata/global-metadata.dat` for stubs and addresses, then Ghidra on `GameAssembly.dll` with those names and addresses carried over | Il2CppDumper (its Ghidra script applies the names) | `ilspycmd -t Type` on the recovered stubs (signatures only) |
 | Unity Editor or Engine | UnityCsReference at the matching tag | `ilspycmd` on the managed dll, to confirm the binary matches | Ghidra on `UnityPlayer.dll` or the editor binary, Tier 2 |
 
 ReadyToRun keeps the IL and metadata, so ilspycmd decompiles it normally; only Native AOT strips
 the IL and needs a native decompiler. IL2CPP stubs from Cpp2IL carry signatures with empty
 bodies: the shape of `Combat.ApplyDamage`, never its logic. The logic is in Ghidra's output for
-`GameAssembly.dll` with the recovered names applied.
+`GameAssembly.dll`, where every function is `FUN_<address>` until names are applied: Cpp2IL's
+`isil` dump gives the addresses to look up, and Il2CppDumper's script applies names; see
+`references/unity.md`.
+
+## Say what you will run, not what you have not seen
+
+Describe the command and what it can show; never narrate output before the tool has produced
+it. A crash log with method names but no offsets locates a method, not a line; a listing shows
+which files exist, not what is inside them. Facts about the binary come from the run.
 
 ## Narrow first
 
 - ilspycmd: `-l c` to list types, then `-t Namespace.Type` or
-  `-m "M:Namespace.Type.Method(System.String)"`. `-p -o DIR` (the whole project) only when the
-  question needs a grep across the assembly. `-il` dumps everything and ignores `-t` and `-m`.
+  `-m "M:Namespace.Type.Method(System.String)"`. `-p -o DIR` (the whole project) is the form for
+  when the question needs a grep across the assembly; say that is what it is for, rather than
+  only avoiding it. `-il` dumps everything and ignores `-t` and `-m`.
 - Ghidra: import once into a scratch project (`--project-dir` outside the repository; the import
   pulls system libraries in), keep the project, and re-run scripts with `-process` (the wrapper
   does this when the project already exists). `--filter NAME` exports only matching functions.
@@ -105,9 +117,10 @@ bodies: the shape of `Combat.ApplyDamage`, never its logic. The logic is in Ghid
 - Native quick look: one function with `objdump --disassemble=NAME`,
   `llvm-objdump --disassemble-symbols=NAME`, or `gdb -batch -ex "disassemble NAME"` before any
   whole-binary `dumpbin /DISASM` dump.
-- Unity: one type out of `Assembly-CSharp.dll`. The UnityEngine reference assemblies sit in the
-  same `Managed` folder, so resolution normally works from there; add `-r <Managed dir>` if
-  references come back unresolved.
+- Unity: one type out of `<Name>_Data/Managed/Assembly-CSharp.dll`; take `<Name>_Data` from the
+  directory listing rather than guessing it. Say why no `-r` is needed: the UnityEngine reference
+  assemblies sit in that same `Managed` folder, so resolution works from there (add
+  `-r <Managed dir>` only if references come back unresolved).
 
 ## Symbols decide readability
 
