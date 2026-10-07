@@ -121,8 +121,8 @@ python scripts/ghidra-decompile.py PLAYER/GameAssembly.dll --output OUT/gameasse
 ```
 
 Measured on the fixture: the first run (import plus analysis) took 224 s and reported
-`functions=0 unnamed=0 (symbols applied)` (the suffix is the wrapper's zero-function default,
-not a sign of symbols); the second reused the project (`-process`, 5.1 s) and reported
+`functions=0 unnamed=0 (symbols applied)` (the wrapper prints that suffix whenever it does not
+see `FUN_` names, zero functions included; it is not a sign of symbols); the second reused the project (`-process`, 5.1 s) and reported
 `functions=13 unnamed=13 (no symbols: expect FUN_ names)`. Among the 13: `FUN_18013b100` with
 signature `int (int,int,float)` is `ApplyDamage`; `FUN_18013b200`, void with no arguments, is
 `DamageProbe.Start`.
@@ -188,8 +188,8 @@ recover names from. Verify the file name on a real Burst player before relying o
 
 1. A relative `-outDir` passed to the editor is resolved against the project folder, not the
    shell's working directory. The fixture generator resolves `--out` to an absolute path first.
-2. Cpp2IL needs absolute paths for `--game-path` and `--output-to`, and creates a `Plugins/`
-   folder in the current directory. Run it from a scratch folder.
+2. Cpp2IL was run with absolute `--game-path` and `--output-to` (relative paths were not tried),
+   and it creates a `Plugins/` folder in the current directory. Run it from a scratch folder.
 3. Cpp2IL `dummydll` stubs carry no address attributes. The address comes from the `isil` dump.
 4. A Ghidra `--filter` by method name on `GameAssembly.dll` returns zero functions; filter on
    the `FUN_<address prefix>` instead, after the import has run once.
