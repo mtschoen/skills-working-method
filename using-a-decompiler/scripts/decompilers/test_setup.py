@@ -46,7 +46,7 @@ def test_present_tools_are_reported_and_not_installed():
     assert not [c for c in calls if "install" in c]
 
 
-def test_missing_dotnet_tool_is_installed_via_dotnet():
+def test_missing_dotnet_tool_is_installed_via_dotnet(tmp_path):
     calls = []
 
     def find(kind, **_):
@@ -57,11 +57,16 @@ def test_missing_dotnet_tool_is_installed_via_dotnet():
         return 0, "Tool 'ilspycmd' was successfully installed.", ""
 
     results = setup.run(
-        only=["ilspycmd"], system=lambda: "Linux", find=find, runner=runner, environ={}
+        only=["ilspycmd"],
+        system=lambda: "Linux",
+        find=find,
+        runner=runner,
+        environ={"HOME": str(tmp_path)},
     )
     assert results[0].status == "installed"
     assert calls == [["/usr/bin/dotnet", "tool", "install", "--global", "ilspycmd"]]
-    assert ".dotnet/tools" in results[0].detail or ".dotnet\\tools" in results[0].detail
+    assert f"Ensure {tmp_path / '.dotnet' / 'tools'} is on PATH." in results[0].detail
+    assert "DOTNET_ROLL_FORWARD=Major" in results[0].detail
 
 
 def test_missing_dotnet_sdk_is_manual():

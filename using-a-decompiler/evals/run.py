@@ -153,7 +153,7 @@ def run_single_turn(
     # contaminating the without_skill baseline. The sandbox lives under the
     # system temp dir, outside the skill tree.
     mock_source = Path(eval_entry["mock_repo"]).resolve()
-    sandbox = Path(tempfile.mkdtemp(prefix="dbg-eval-"))
+    sandbox = Path(tempfile.mkdtemp(prefix="decomp-eval-"))
     try:
         mock_name = mock_source.name
         shutil.copytree(mock_source, sandbox / mock_name)

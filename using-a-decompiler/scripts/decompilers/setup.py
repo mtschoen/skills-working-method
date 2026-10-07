@@ -72,7 +72,14 @@ def _install_dotnet_tool(kind: str, dotnet: str, runner: Runner, environ) -> Res
     if code != 0:
         return Result(kind, "failed", (err or out).strip())
     tools_dir = discovery.dotnet_tools_dir(environ)
-    return Result(kind, "installed", f"{out.strip()} Ensure {tools_dir} is on PATH.")
+    return Result(
+        kind,
+        "installed",
+        (
+            f"{out.strip()} Ensure {tools_dir} is on PATH. "
+            "On Linux set DOTNET_ROLL_FORWARD=Major if the tool reports a missing runtime."
+        ),
+    )
 
 
 def run(

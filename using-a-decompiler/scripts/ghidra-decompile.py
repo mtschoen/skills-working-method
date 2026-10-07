@@ -62,13 +62,17 @@ def main() -> int:
         name_filter=arguments.name_filter,
         timeout_seconds=arguments.timeout_seconds,
     )
-    symbols = "symbols applied"
-    if report.summary.functions and report.summary.unnamed == report.summary.functions:
-        symbols = "no symbols: expect FUN_ names"
+    functions = report.summary.functions
+    unnamed = report.summary.unnamed
+    note = ""
+    if functions == 0:
+        note = " (no functions matched)"
+    elif unnamed == functions:
+        note = " (no symbols: every function is FUN_)"
     print(" ".join(report.command))
     print(
         f"exit={report.exit_code} seconds={report.seconds:.1f} "
-        f"functions={report.summary.functions} unnamed={report.summary.unnamed} ({symbols})"
+        f"functions={functions} named={functions - unnamed} unnamed={unnamed}{note}"
     )
     return 0 if report.exit_code == 0 else 1
 

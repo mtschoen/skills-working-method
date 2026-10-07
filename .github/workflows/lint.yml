@@ -76,7 +76,7 @@ jobs:
         run: |
           ruff check scripts evals
           ruff format --check scripts evals
-          python -m pytest scripts -q
+          python -m pytest scripts -q -W error
 
   shell:
     runs-on: ubuntu-latest

@@ -312,7 +312,7 @@ def effective_pass_rate(record: dict) -> float | None:
 
     The universal assertion defines a fabricated command as an automatic run
     failure regardless of how many per-eval assertions passed, so a response that
-    invents a debugger command scores 0 here even if its other assertions held.
+    invents a command or tool flag scores 0 here even if its other assertions held.
     Returns None for units that were never graded (no summary, e.g. errored).
     """
     if "summary" not in record:

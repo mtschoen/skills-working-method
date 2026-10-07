@@ -11,19 +11,40 @@ _SPEC.loader.exec_module(ghidra_decompile)
 from decompilers.ghidra import RunReport, Summary  # noqa: E402
 
 
-def test_main_reports_symbol_status(monkeypatch, capsys, tmp_path):
+def _summary_line(monkeypatch, capsys, tmp_path, summary):
     monkeypatch.setattr(
         ghidra_decompile, "find_tool", lambda kind, **_: "/g/support/analyzeHeadless"
     )
     monkeypatch.setattr(
-        ghidra_decompile, "run_decompile", lambda *a, **k: RunReport(["ah"], 0, 2.0, Summary(3, 3))
+        ghidra_decompile, "run_decompile", lambda *a, **k: RunReport(["ah"], 0, 2.0, summary)
     )
     monkeypatch.setattr(
         sys, "argv", ["ghidra-decompile.py", str(tmp_path / "b"), "--output", str(tmp_path / "o.c")]
     )
     assert ghidra_decompile.main() == 0
-    out = capsys.readouterr().out
-    assert "functions=3 unnamed=3" in out and "no symbols" in out
+    return capsys.readouterr().out.splitlines()[-1]
+
+
+def test_summary_line_zero_functions(monkeypatch, capsys, tmp_path):
+    line = _summary_line(monkeypatch, capsys, tmp_path, Summary(0, 0))
+    assert line == "exit=0 seconds=2.0 functions=0 named=0 unnamed=0 (no functions matched)"
+
+
+def test_summary_line_all_unnamed(monkeypatch, capsys, tmp_path):
+    line = _summary_line(monkeypatch, capsys, tmp_path, Summary(3, 3))
+    assert line == (
+        "exit=0 seconds=2.0 functions=3 named=0 unnamed=3 (no symbols: every function is FUN_)"
+    )
+
+
+def test_summary_line_mixed(monkeypatch, capsys, tmp_path):
+    line = _summary_line(monkeypatch, capsys, tmp_path, Summary(4, 1))
+    assert line == "exit=0 seconds=2.0 functions=4 named=3 unnamed=1"
+
+
+def test_summary_line_all_named(monkeypatch, capsys, tmp_path):
+    line = _summary_line(monkeypatch, capsys, tmp_path, Summary(2, 0))
+    assert line == "exit=0 seconds=2.0 functions=2 named=2 unnamed=0"
 
 
 def test_main_exit_two_without_ghidra(monkeypatch, capsys, tmp_path):

@@ -56,7 +56,9 @@ def test_ghidra_search_roots_env_first_then_home_globs(tmp_path):
     newer.mkdir()
     configured = tmp_path / "configured"
     roots = discovery.ghidra_search_roots(
-        {"GHIDRA_INSTALL_DIR": str(configured)}, home=tmp_path, system="Windows"
+        {"GHIDRA_INSTALL_DIR": str(configured), "HOME": str(tmp_path)},
+        home=tmp_path,
+        system="Windows",
     )
     assert roots == [configured, newer, older]
 
@@ -64,7 +66,9 @@ def test_ghidra_search_roots_env_first_then_home_globs(tmp_path):
 def test_ghidra_search_roots_without_env_lists_home_globs_only(tmp_path):
     install = tmp_path / "ghidra_11.4.2_PUBLIC"
     install.mkdir()
-    assert discovery.ghidra_search_roots({}, home=tmp_path, system="Windows") == [install]
+    assert discovery.ghidra_search_roots(
+        {"HOME": str(tmp_path)}, home=tmp_path, system="Windows"
+    ) == [install]
 
 
 def test_find_analyze_headless_under_ghidra_install_dir(tmp_path):
@@ -83,6 +87,9 @@ def test_find_analyze_headless_under_ghidra_install_dir(tmp_path):
 def test_find_dumpbin_uses_vswhere_output(tmp_path):
     dumpbin = tmp_path / "dumpbin.exe"
     dumpbin.write_text("")
+    vswhere = tmp_path / "Microsoft Visual Studio" / "Installer" / "vswhere.exe"
+    vswhere.parent.mkdir(parents=True)
+    vswhere.write_text("")
     calls = []
 
     def runner(command):
@@ -106,3 +113,60 @@ def test_find_dumpbin_is_none_off_windows():
         "dumpbin", which=lambda name: None, environ={}, system=lambda: "Linux"
     )
     assert found is None
+
+
+def _dumpbin_environ(tmp_path, *, create_vswhere):
+    if create_vswhere:
+        vswhere = tmp_path / "Microsoft Visual Studio" / "Installer" / "vswhere.exe"
+        vswhere.parent.mkdir(parents=True)
+        vswhere.write_text("")
+    return {"ProgramFiles(x86)": str(tmp_path), "HOME": str(tmp_path)}
+
+
+def _find_dumpbin(environ, runner):
+    return discovery.find_tool(
+        "dumpbin",
+        which=lambda name: None,
+        environ=environ,
+        system=lambda: "Windows",
+        runner=runner,
+    )
+
+
+def test_find_dumpbin_is_none_when_vswhere_is_absent(tmp_path):
+    calls = []
+
+    def runner(command):
+        calls.append(command)
+        return 0, "", ""
+
+    environ = _dumpbin_environ(tmp_path, create_vswhere=False)
+    assert _find_dumpbin(environ, runner) is None
+    assert calls == []
+
+
+def test_find_dumpbin_is_none_when_runner_raises_file_not_found(tmp_path):
+    def runner(command):
+        raise FileNotFoundError(command[0])
+
+    environ = _dumpbin_environ(tmp_path, create_vswhere=True)
+    assert _find_dumpbin(environ, runner) is None
+
+
+def test_find_dumpbin_is_none_on_non_zero_exit(tmp_path):
+    environ = _dumpbin_environ(tmp_path, create_vswhere=True)
+    assert _find_dumpbin(environ, lambda command: (1, "ignored.exe\n", "")) is None
+
+
+def test_find_dumpbin_is_none_on_empty_output(tmp_path):
+    environ = _dumpbin_environ(tmp_path, create_vswhere=True)
+    assert _find_dumpbin(environ, lambda command: (0, "", "")) is None
+
+
+def test_find_dumpbin_skips_blank_lines(tmp_path):
+    environ = _dumpbin_environ(tmp_path, create_vswhere=True)
+    assert _find_dumpbin(environ, lambda command: (0, "\n   \n", "")) is None
+    dumpbin = tmp_path / "dumpbin.exe"
+    dumpbin.write_text("")
+    found = _find_dumpbin(environ, lambda command: (0, f"\n{dumpbin}\n", ""))
+    assert found == str(dumpbin)

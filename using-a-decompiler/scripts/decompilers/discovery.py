@@ -1,7 +1,8 @@
 """Locate the decompilers and disassemblers this skill drives.
 
-Pure lookups with injectable collaborators so tests never touch PATH, the
-environment, or the filesystem. Standard library only.
+Pure lookups with injectable collaborators so tests never touch PATH or the
+environment, and touch the filesystem only beyond injected paths (the /opt glob
+on non-Windows systems). Standard library only.
 """
 
 import os
@@ -76,11 +77,19 @@ def _find_dumpbin(environ, runner: Runner | None) -> str | None:
     if not program_files or runner is None:
         return None
     vswhere = Path(program_files) / _VSWHERE_RELATIVE
-    code, out, _ = runner([str(vswhere), "-all", "-products", "*", "-find", _DUMPBIN_PATTERN])
+    if not vswhere.exists():
+        return None
+    try:
+        code, out, _ = runner([str(vswhere), "-all", "-products", "*", "-find", _DUMPBIN_PATTERN])
+    except OSError:
+        return None
     if code != 0:
         return None
     for line in out.splitlines():
-        candidate = Path(line.strip())
+        text = line.strip()
+        if not text:
+            continue
+        candidate = Path(text)
         if candidate.exists():
             return str(candidate)
     return None

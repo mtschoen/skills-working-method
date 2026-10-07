@@ -5,6 +5,8 @@ written to a .bat and run through cmd, because launching analyzeHeadless.bat
 through a quoted cmd /c string from PowerShell breaks on the redirect.
 """
 
+import hashlib
+import json
 import platform
 import subprocess
 import time
@@ -12,6 +14,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import NamedTuple
 
+Digest = Callable[[Path], str]
 Runner = Callable[[list[str]], tuple[int, str, str]]
 POST_SCRIPT = "DecompileAllToFile.java"
 
@@ -30,6 +33,40 @@ class RunReport(NamedTuple):
 
 def project_exists(project_dir: Path, project_name: str) -> bool:
     return (project_dir / f"{project_name}.gpr").exists()
+
+
+def sha256_of(path: Path) -> str:
+    hasher = hashlib.sha256()
+    with Path(path).open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
+
+def _sidecar_path(project_dir: Path, project_name: str) -> Path:
+    return project_dir / f"{project_name}.source.json"
+
+
+def project_matches(project_dir: Path, project_name: str, binary: Path, *, digest: Digest) -> bool:
+    """True when the stored project was imported from exactly this binary's bytes."""
+    sidecar = _sidecar_path(project_dir, project_name)
+    if not project_exists(project_dir, project_name) or not sidecar.exists():
+        return False
+    try:
+        stored = json.loads(sidecar.read_text(encoding="utf-8"))
+        current = digest(binary)
+    except (OSError, ValueError):
+        return False
+    return isinstance(stored, dict) and stored.get("sha256") == current
+
+
+def _sidecar_text(binary: Path, digest: Digest) -> str:
+    record = {
+        "path": str(binary.resolve()),
+        "size": binary.stat().st_size,
+        "sha256": digest(binary),
+    }
+    return json.dumps(record, indent=2)
 
 
 def build_command(
@@ -64,8 +101,11 @@ def build_command(
 
 
 def _quote(argument: str) -> str:
-    needs_quotes = " " in argument or chr(92) in argument or "/" in argument
-    return f'"{argument}"' if needs_quotes and not argument.startswith("-") else argument
+    if '"' in argument:
+        raise ValueError(f"argument cannot contain a double quote: {argument!r}")
+    if argument.startswith("-"):
+        return argument.replace("%", "%%")
+    return '"' + argument.replace("%", "%%") + '"'
 
 
 def windows_launcher(command: list[str], log_path: Path) -> str:
@@ -96,12 +136,14 @@ def run_decompile(
     timeout_seconds: int = 60,
     system=platform.system,
     runner: Runner = _default_runner,
+    digest: Digest = sha256_of,
     write_text=lambda path, text: Path(path).write_text(text, encoding="utf-8"),
     clock=time.monotonic,
 ) -> RunReport:
     project_dir.mkdir(parents=True, exist_ok=True)
     output.parent.mkdir(parents=True, exist_ok=True)
-    reuse = project_exists(project_dir, project_name)
+    reuse = project_matches(project_dir, project_name, binary, digest=digest)
+    output.unlink(missing_ok=True)
     command = build_command(
         analyze_headless,
         project_dir,
@@ -121,5 +163,7 @@ def run_decompile(
     else:
         code, _, _ = runner(command)
     seconds = clock() - started
+    if code == 0:
+        write_text(_sidecar_path(project_dir, project_name), _sidecar_text(binary, digest))
     text = output.read_text(encoding="utf-8", errors="replace") if output.exists() else ""
     return RunReport(command, code, seconds, summarize_output(text))
