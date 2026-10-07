@@ -57,9 +57,9 @@ public static class CombatMath
 
 The formula is intact. Local names are decompiler-invented (`num`, `num2`) because a player
 ships no pdb, and the clamp comes back as `>= 0` with an early return rather than the source's
-ternary. The UnityEngine reference assemblies sit in the same `Managed` folder; the fixture run
-resolved them without `-r`. Add `-r PLAYER/FixtureProject_Data/Managed` if a type comes back
-unresolved.
+ternary. The fixture run passed no `-r` and the decompile came back complete (`Mathf.RoundToInt`
+resolved); the UnityEngine assemblies sit in the same `Managed` folder. If a type ever comes back
+unresolved, `-r PLAYER/FixtureProject_Data/Managed` is the documented flag (not needed here).
 
 ## IL2CPP player
 
@@ -77,7 +77,9 @@ Cpp2IL-2022.1.0-pre-release.21-Windows.exe --game-path PLAYER --exe-name Fixture
 Cpp2IL-2022.1.0-pre-release.21-Windows.exe --game-path PLAYER --exe-name FixtureProject --output-as isil --output-to OUT_DIR_ISIL
 ```
 
-Paths must be absolute. The run took 1.3 s on the fixture and logged
+The `isil` line is the `dummydll` command with the format and output folder swapped; the lane
+ran it that way. Both runs used absolute paths (relative ones were not tried). The `dummydll`
+run took 1.3 s on the fixture and logged
 `Determined game's unity version to be 6000.0.64f1`, `Using actual IL2CPP Metadata version 31.1`,
 and `Mapping pointers to Il2CppMethodDefinitions...Processed 16220 OK`.
 
@@ -103,7 +105,8 @@ What each gives:
 - `isil` writes one text file per type (`IsilDump/Assembly-CSharp/CombatMath.txt`) with the real
   x64 disassembly of each method, including absolute addresses in jump targets and data
   references (`jne short 000000018013B140h`, `[1806A8A20h]`). It has no explicit entry-address
-  line; the function's address range is read off those targets.
+  line; the function's address range is read off those targets (the lane inferred
+  `ApplyDamage` as near `0x18013B1xx` from them).
 - `diffable-cs` has signatures only, no addresses.
 
 ### Step 2: Ghidra on GameAssembly.dll, located by address
@@ -118,7 +121,8 @@ python scripts/ghidra-decompile.py PLAYER/GameAssembly.dll --output OUT/gameasse
 ```
 
 Measured on the fixture: the first run (import plus analysis) took 224 s and reported
-`functions=0 unnamed=0`; the second reused the project (`-process`, 5.1 s) and reported
+`functions=0 unnamed=0 (symbols applied)` (the suffix is the wrapper's zero-function default,
+not a sign of symbols); the second reused the project (`-process`, 5.1 s) and reported
 `functions=13 unnamed=13 (no symbols: expect FUN_ names)`. Among the 13: `FUN_18013b100` with
 signature `int (int,int,float)` is `ApplyDamage`; `FUN_18013b200`, void with no arguments, is
 `DamageProbe.Start`.
@@ -146,16 +150,18 @@ folded the product into a data constant, so `FUN_18013b200` contains `100 - (int
 with the literal `100` and a load from `DAT_1806a8a38`. The optimizer, not the reader, moved
 the argument.
 
-Il2CppDumper (winget `Perfare.Il2CppDumper`) emits `script.json` and a Ghidra script that apply
-method names inside Ghidra. It was not exercised; when names in Ghidra matter more than a quick
+Il2CppDumper is the other recovery tool and, by its own documentation, emits a script that
+applies method names inside Ghidra. It was not exercised here (its output names and the winget
+package id in `tooling-setup.md` are unverified); when names in Ghidra matter more than a quick
 address lookup, it is the tool to try.
 
 ## Burst
 
-Not exercised. Burst-compiled jobs leave `Assembly-CSharp.dll` as ordinary IL (the job structs
-and their `Execute` methods decompile with ilspycmd) while the compiled job bodies ship as native
-code in `lib_burst_generated.dll` under the player's `<Name>_Data/Plugins/` folder. That native library is a Ghidra target like
-any other, with no symbols and no metadata file to recover names from.
+Not exercised. By Unity's documentation, Burst leaves the job structs in `Assembly-CSharp.dll`
+as ordinary IL and ships the compiled job bodies as a native library (named
+`lib_burst_generated` under the player's data folder). Expect the managed side to decompile with
+ilspycmd and the native library to be a Ghidra target with no symbols and no metadata file to
+recover names from. Verify the file name on a real Burst player before relying on it.
 
 ## Editor and Engine
 
@@ -171,10 +177,11 @@ any other, with no symbols and no metadata file to recover names from.
 
 ## Unity-bundled monodis
 
-- Windows editors: `Editor/Data/MonoBleedingEdge/bin/monodis` is a macOS Mach-O binary and does
-  not run, directly or under `mono.exe` (`File does not contain a valid CIL image`).
-  `lib/mono/4.5/ikdasm.exe` under the bundled `mono.exe` works, but `dotnet il dasm` covers the
-  same need. Platform: Windows (verified).
+- Windows editors: in the Unity 2022.3 editor tree checked on 2026-10-06,
+  `Editor/Data/MonoBleedingEdge/bin/monodis` is a macOS Mach-O binary and does not run, directly
+  or under `mono.exe` (`File does not contain a valid CIL image`). `lib/mono/4.5/ikdasm.exe`
+  under the bundled `mono.exe` works, but `dotnet il dasm` covers the same need. Other editor
+  versions were not checked. Platform: Windows (verified on 2022.3).
 - macOS and Linux editors: not checked. Treat monodis there as unverified.
 
 ## Traps
