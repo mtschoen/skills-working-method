@@ -20,7 +20,9 @@ python scripts/ghidra-decompile.py PATH/TO/BIN --output out.c --timeout 60
 - `--ghidra PATH` points at `analyzeHeadless` (or `analyzeHeadless.bat`) when
   `GHIDRA_INSTALL_DIR` is not set. `--project-dir` and `--project-name` move the project.
 - The project defaults to a `ghidra-projects` folder under the system temp directory and is named
-  after the binary. A second run of the same binary reuses it and skips analysis.
+  after the binary. A second run of the same binary reuses it and skips analysis; "same" means
+  the sha256 recorded in `<name>.source.json` beside the project matches, so a rebuilt or
+  different binary with the same file name is imported again with `-overwrite`.
 
 The script prints the Ghidra command it ran, then one summary line:
 
