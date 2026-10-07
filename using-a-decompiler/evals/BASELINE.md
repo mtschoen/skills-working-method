@@ -64,5 +64,7 @@ round-2 reruns.
 | 13 output-handling | 2/2 | |
 
 Residuals left at the cap: a sentence-count miss (eval 1) and one run that guessed a path
-instead of reading the listing (eval 8). Both are model variance against rules the text now
-states exactly; the text is not loosened to absorb them.
+instead of reading the listing (eval 8), both model variance against rules the text now states
+exactly; plus one claim-check failure each on evals 5 and 10 from the full round, whose wording
+in the skill was corrected afterwards (eval 5 rerun after the correction; eval 10 not rerun).
+The text is not loosened to absorb them.

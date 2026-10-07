@@ -104,9 +104,9 @@
       "user": "there's no Assembly-CSharp.dll in the IL2CPP build. how do I read ApplyDamage out of it?",
       "assertions": [
         "Response identifies the artifacts: GameAssembly.dll plus MyGame_Data/il2cpp_data/Metadata/global-metadata.dat",
-        "Response names Cpp2IL (or Il2CppDumper) as the first step to recover stub assemblies and a name-to-address map",
+        "Response names Cpp2IL (or Il2CppDumper) as the first step to recover stub assemblies and the addresses at which methods sit",
         "Response states that the recovered stubs carry signatures only (empty method bodies), so ilspycmd on them gives the shape of Combat.ApplyDamage but not its logic",
-        "Response names Ghidra on GameAssembly.dll, with the recovered names applied, as the way to read the actual formula",
+        "Response names Ghidra on GameAssembly.dll, located by the recovered addresses (or with names applied by a dumper script), as the way to read the actual formula",
         "Response treats this as Tier 1 (owner's own build) and does not ask for a justification"
       ]
     },

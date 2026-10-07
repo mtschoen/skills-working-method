@@ -120,10 +120,10 @@ python scripts/ghidra-decompile.py PLAYER/GameAssembly.dll --output OUT/gameasse
 python scripts/ghidra-decompile.py PLAYER/GameAssembly.dll --output OUT/gameassembly-range.c --project-dir SCRATCH/ghidra-projects --filter FUN_18013b
 ```
 
-Measured on the fixture: the first run (import plus analysis) took 224 s and reported
-`functions=0 unnamed=0 (symbols applied)` (the wrapper prints that suffix whenever it does not
-see `FUN_` names, zero functions included; it is not a sign of symbols); the second reused the project (`-process`, 5.1 s) and reported
-`functions=13 unnamed=13 (no symbols: expect FUN_ names)`. Among the 13: `FUN_18013b100` with
+Measured on the fixture: the first run (import plus analysis) took 224 s and reported zero
+functions (the wrapper now prints `functions=0 named=0 unnamed=0 (no functions matched)` for
+that case); the second reused the project (`-process`, 5.1 s) and reported 13 functions, all
+unnamed (`functions=13 named=0 unnamed=13 (no symbols: every function is FUN_)`). Among the 13: `FUN_18013b100` with
 signature `int (int,int,float)` is `ApplyDamage`; `FUN_18013b200`, void with no arguments, is
 `DamageProbe.Start`.
 

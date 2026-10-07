@@ -40,7 +40,7 @@ manual steps; `references/tooling-setup.md` is the authoritative guide.
 | dumpbin or objdump | dumpbin: Visual Studio "Desktop development with C++" workload (Windows). objdump: binutils from the distro (Linux) | Quick native look. The script finds dumpbin through vswhere. |
 | Cpp2IL | Single-file release downloaded onto `PATH` | Unity IL2CPP stubs and addresses. Manual; not exercised by the discovery runs. |
 
-The scripts also need **Python 3** on PATH.
+The scripts also need **Python 3.11 or newer** on PATH.
 
 ```bash
 python scripts/setup-decompilers.py            # detect, then install what it can

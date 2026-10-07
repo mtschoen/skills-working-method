@@ -77,9 +77,8 @@ vendor. Cite by symbol and offset: the type, the method, the field, the conditio
 minimum, a few lines at most, and say why the quote is minimal. A write-up names
 `FolderWatcher.OnRenamed` and the unassigned field; it does not carry the method body. Such a
 write-up, cited by symbol and condition, is not decompiled output and may be committed; the
-decompiled output itself stays in scratch. Tier 1
-output may be kept, but a whole-project decompile of the owner's own dll is still scratch; the
-source is the record.
+decompiled output itself stays in scratch. Tier 1 output may be kept, but a whole-project
+decompile of the owner's own dll is still scratch; the source is the record.
 
 ## Pick the tool by artifact
 
@@ -88,14 +87,15 @@ source is the record.
 | .NET assembly (`.dll`, `.exe`; ReadyToRun included) | `ilspycmd` | `dotnet il dasm` for one method's IL | `ilspycmd -l c X.dll` |
 | Native PE or ELF (`.dll`, `.so`, `.exe`; Native AOT) | Ghidra headless through `scripts/ghidra-decompile.py` | Ghidra GUI on one function | `llvm-objdump -p`, `dumpbin /EXPORTS`, `objdump -d --disassemble=NAME`, `gdb -batch` |
 | Unity Mono player | `ilspycmd` on `*_Data/Managed/Assembly-CSharp.dll` | `dotnet il dasm` | `ilspycmd -l c` |
-| Unity IL2CPP player | Cpp2IL on `GameAssembly.dll` plus `<Name>_Data/il2cpp_data/Metadata/global-metadata.dat` for stubs and addresses, then Ghidra on `GameAssembly.dll` with those names and addresses carried over | Il2CppDumper (its Ghidra script applies the names) | `ilspycmd -t Type` on the recovered stubs (signatures only) |
+| Unity IL2CPP player | Cpp2IL on `GameAssembly.dll` plus `<Name>_Data/il2cpp_data/Metadata/global-metadata.dat`: `dummydll` stubs for signatures, the `isil` dump for addresses; then Ghidra on `GameAssembly.dll` filtered by `FUN_<address prefix>` | Il2CppDumper (its Ghidra script applies names; unverified) | `ilspycmd -t Type` on the recovered stubs (signatures only) |
 | Unity Editor or Engine | UnityCsReference at the matching tag | `ilspycmd` on the managed dll, to confirm the binary matches | Ghidra on `UnityPlayer.dll` or the editor binary, Tier 2 |
 
 ReadyToRun keeps the IL and metadata, so ilspycmd decompiles it normally; only Native AOT strips
 the IL and needs a native decompiler. IL2CPP stubs from Cpp2IL carry signatures with empty
 bodies: the shape of `Combat.ApplyDamage`, never its logic. The logic is in Ghidra's output for
-`GameAssembly.dll`, where every function is `FUN_<address>` until names are applied: Cpp2IL's
-`isil` dump gives the addresses to look up, and Il2CppDumper's script applies names; see
+`GameAssembly.dll`, where every function is `FUN_<address>`: nothing in Cpp2IL's output carries
+names into Ghidra, so read the method's address range off the jump targets in its `isil` dump
+and filter Ghidra on that prefix. Il2CppDumper's script can apply names (unverified). See
 `references/unity.md`.
 
 ## Say what you will run, not what you have not seen
@@ -133,9 +133,9 @@ which files exist, not what is inside them. Facts about the binary come from the
   back as `num`, `list`, `safeFileHandle`. Local names live only in the pdb, not in assembly
   metadata, so this is expected, not a bug: copy the pdb next to the dll and rerun.
 - Ghidra applies a pdb automatically: function names and types are real, parameters stay
-  `param_N` and locals `local_NN` (measured on a Windows Debug DLL). DWARF on ELF is applied by
-  Ghidra's DWARF analyzer and carries parameter names as well; it was not measured here, so say
-  so rather than predicting the names.
+  `param_N` and locals `local_NN` (measured on a Windows Debug DLL). DWARF on ELF was not
+  measured; Ghidra has a DWARF analyzer, but whether parameter and local names come through was
+  not checked, so say that rather than predicting the names.
 - Stripped means `FUN_<address>` names and guessed types. Orient by strings and their
   cross-references (an `=` literal, an error message), by imports (`strchr`, `strlen`), and by the
   export table. A by-symbol filter such as `objdump --disassemble=NAME` prints nothing on a
@@ -143,8 +143,9 @@ which files exist, not what is inside them. Facts about the binary come from the
 
 ## Platform note
 
-Windows and Linux were verified separately on 2026-10-06; macOS is unverified. ilspycmd is the
-one tool verified on both: `dotnet tool install --global ilspycmd`, then on Linux
+Windows and Linux were verified separately on 2026-10-06; macOS is unverified. ilspycmd,
+`dotnet il dasm`, and llvm-objdump ran on both; ilspycmd is the primary tool:
+`dotnet tool install --global ilspycmd`, then on Linux
 `export PATH="$PATH:$HOME/.dotnet/tools"` before the command resolves. `dumpbin` is Windows-only
 (located through `vswhere`); `gdb -batch` and GNU `objdump` are the Linux quick look; `monodis`
 in the Windows Unity editor tree is a macOS Mach-O binary and does not run there; Ghidra 11.4+

@@ -25,11 +25,13 @@ python scripts/ghidra-decompile.py PATH/TO/BIN --output out.c --timeout 60
 The script prints the Ghidra command it ran, then one summary line:
 
 ```text
-exit=0 seconds=45.0 functions=1259 unnamed=0 (symbols applied)
+exit=0 seconds=45.0 functions=1259 named=1259 unnamed=0
 ```
 
-`unnamed` counts functions named `FUN_...`. When every function is unnamed the summary says
-`no symbols: expect FUN_ names`.
+`unnamed` counts functions named `FUN_...` and `named` is the rest. The line ends with
+`(no functions matched)` when nothing came out, or `(no symbols: every function is FUN_)` when
+every function is unnamed; a mixed result carries no verdict, because a stripped binary can
+still have named exports and import thunks.
 
 ## The command it generates
 
@@ -65,8 +67,8 @@ A function that fails gets a `// decompile failed: MESSAGE` line instead of code
   from the pdb as well.
 - Parameters stay `param_N` and locals stay `local_NN` even with a pdb.
 - With no symbols the functions are named `FUN_` plus the address. The wrapper reports this.
-- DWARF on ELF was not exercised. Ghidra's DWARF analyzer applies it the same way the PDB
-  analyzer applies a pdb (documented Ghidra behaviour, not measured here).
+- DWARF on ELF was not exercised. Ghidra has a DWARF analyzer; whether parameter and local
+  names come through it was not checked here.
 
 ## Reading the output
 

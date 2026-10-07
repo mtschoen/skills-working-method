@@ -30,9 +30,9 @@ output kept or discarded as the owner likes.
 - **The owner's own IL2CPP player.** `game/MyGame_IL2CPP` was built from their project months ago
   and the commit is lost; they want the damage formula that shipped in `Combat.ApplyDamage`. The
   artifacts are `GameAssembly.dll` and `MyGame_Data/il2cpp_data/Metadata/global-metadata.dat`.
-  Cpp2IL recovers stub assemblies (signatures only, empty bodies) and a name-to-address map; Ghidra
-  on `GameAssembly.dll` with the recovered names applied shows the arithmetic. Two tools, no
-  question asked.
+  Cpp2IL recovers stub assemblies (signatures only, empty bodies) and, through its `isil` dump,
+  the addresses each method's code sits at; Ghidra on `GameAssembly.dll`, filtered to that
+  address range, shows the arithmetic under a `FUN_` name. Two tools, no question asked.
 
 A lost tag, a reimaged build machine, a missing pdb, or a build made by a former colleague on the
 owner's own project does not move the artifact out of Tier 1.
