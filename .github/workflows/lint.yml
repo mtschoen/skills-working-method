@@ -71,6 +71,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: python3 ci/post-coverage-status.py --coverage-json using-a-debugger/coverage.json
+      - name: using-a-decompiler
+        working-directory: using-a-decompiler
+        run: |
+          ruff check scripts evals
+          ruff format --check scripts evals
+          python -m pytest scripts evals -q -W error
 
   shell:
     runs-on: ubuntu-latest
