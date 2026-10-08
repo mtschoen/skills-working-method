@@ -1,6 +1,5 @@
 import socket
 import threading
-import time
 from pathlib import Path
 
 import pytest
@@ -90,22 +89,19 @@ def test_server_serve_forever(tmp_path: Path):
     port = server.port
     assert port > 0
 
-    thread = threading.Thread(target=server.serve_forever)
+    # Daemon, so a failed assertion below cannot keep the pytest process alive.
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
 
-    # Wait for port file to be written
-    port_file = tmp_path / "port"
-    for _ in range(50):
-        if port_file.exists():
-            break
-        time.sleep(0.05)
-    assert port_file.read_text() == str(port)
-
-    # Send a regular command
+    # The socket listens from construction, so no wait for the port file is needed.
     with socket.create_connection(("127.0.0.1", port), timeout=5.0) as conn:
         conn.sendall(b"local x\n")
         resp = conn.recv(1024).decode()
         assert resp == "local x=42\n"
+
+    # serve_forever writes the port file before it accepts, so an answered
+    # command means the file is complete.
+    assert (tmp_path / "port").read_text() == str(port)
 
     # Send __STOP__ command
     with socket.create_connection(("127.0.0.1", port), timeout=5.0) as conn:
