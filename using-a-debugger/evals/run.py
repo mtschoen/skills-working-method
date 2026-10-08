@@ -94,6 +94,10 @@ def invoke_agent(prompt: str, model: str | None, timeout: int, cwd: str) -> tupl
         "bypassPermissions",
         "--tools",
         "Read,Grep,Glob",
+        # --tools limits built-in tools only; these two keep inherited MCP tools out.
+        "--strict-mcp-config",
+        "--disallowedTools",
+        "mcp__*",
         "--disable-slash-commands",
     ]
     if model:

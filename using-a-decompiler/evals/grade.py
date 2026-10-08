@@ -147,7 +147,7 @@ def build_grader_prompt(unit: GradingUnit) -> str:
     )
 
 
-def invoke_grader(prompt: str, model: str | None, timeout: int) -> dict:
+def grader_command(model: str | None) -> list[str]:
     cmd = [
         "claude",
         "-p",
@@ -157,10 +157,19 @@ def invoke_grader(prompt: str, model: str | None, timeout: int) -> dict:
         "bypassPermissions",
         "--tools",
         "Read,Grep,Glob",
+        # --tools limits built-in tools only; these two keep inherited MCP tools out.
+        "--strict-mcp-config",
+        "--disallowedTools",
+        "mcp__*",
         "--disable-slash-commands",
     ]
     if model:
         cmd.extend(["--model", model])
+    return cmd
+
+
+def invoke_grader(prompt: str, model: str | None, timeout: int) -> dict:
+    cmd = grader_command(model)
     env = {k: v for k, v in os.environ.items() if k != "CLAUDECODE"}
     try:
         result = subprocess.run(

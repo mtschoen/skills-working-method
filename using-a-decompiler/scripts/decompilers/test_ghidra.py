@@ -310,6 +310,27 @@ def test_run_decompile_reimports_when_sidecar_missing(tmp_path):
     assert "-import" in report.command
 
 
+@pytest.mark.parametrize(
+    "failed_replacement",
+    [
+        pytest.param(lambda command: (1, "", "boom"), id="nonzero-exit"),
+        pytest.param(lambda command: (0, "", ""), id="zero-exit-no-receipt"),
+    ],
+)
+def test_run_decompile_reimports_after_failed_replacement_import(tmp_path, failed_replacement):
+    binary = _binary(tmp_path)
+    (tmp_path / "proj").mkdir()
+    (tmp_path / "proj" / "GameAssembly.gpr").write_text("")
+    _run(tmp_path, binary, _successful_runner(tmp_path), digest=lambda path: "version-a")
+
+    # Different bytes under the same name overwrite the project, then the run fails.
+    replacement = _run(tmp_path, binary, failed_replacement, digest=lambda path: "version-b")
+    assert "-overwrite" in replacement.command and replacement.exit_code != 0
+
+    report = _run(tmp_path, binary, _successful_runner(tmp_path), digest=lambda path: "version-a")
+    assert "-import" in report.command and "-process" not in report.command
+
+
 def test_sidecar_written_on_success_only(tmp_path):
     binary = _binary(tmp_path)
     sidecar = tmp_path / "proj" / "GameAssembly.source.json"

@@ -21,7 +21,9 @@ Configuration:
 
 Both configs run with --disable-slash-commands so the agent can't reach
 for any OTHER installed skill, and with --tools restricted to Read/Grep/Glob
-so the agent can inspect the mock repo but never edits it.
+so the agent can inspect the mock repo but never edits it. --tools does not
+cover MCP tools, so --strict-mcp-config and --disallowedTools "mcp__*" keep
+the machine's MCP servers out of the session as well.
 """
 
 import argparse
@@ -86,7 +88,7 @@ def build_prompt(eval_entry: dict, config: str, skill_md: str, mock_repo_path: s
     )
 
 
-def invoke_agent(prompt: str, model: str | None, timeout: int, cwd: str) -> tuple[str, dict]:
+def agent_command(model: str | None) -> list[str]:
     cmd = [
         "claude",
         "-p",
@@ -96,10 +98,19 @@ def invoke_agent(prompt: str, model: str | None, timeout: int, cwd: str) -> tupl
         "bypassPermissions",
         "--tools",
         "Read,Grep,Glob",
+        # --tools limits built-in tools only; these two keep inherited MCP tools out.
+        "--strict-mcp-config",
+        "--disallowedTools",
+        "mcp__*",
         "--disable-slash-commands",
     ]
     if model:
         cmd.extend(["--model", model])
+    return cmd
+
+
+def invoke_agent(prompt: str, model: str | None, timeout: int, cwd: str) -> tuple[str, dict]:
+    cmd = agent_command(model)
     env = {k: v for k, v in os.environ.items() if k != "CLAUDECODE"}
     start = time.time()
     try:

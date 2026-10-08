@@ -190,6 +190,9 @@ def run_decompile(
     reuse = project_matches(project_dir, project_name, binary, digest=digest)
     output.unlink(missing_ok=True)
     receipt_file.unlink(missing_ok=True)
+    if not reuse:
+        # An import overwrites the project, so the old provenance is void until it succeeds.
+        sidecar_file.unlink(missing_ok=True)
     command = build_command(
         analyze_headless,
         project_dir,
