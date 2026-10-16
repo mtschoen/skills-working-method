@@ -33,7 +33,6 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-
 AGENT_PROMPT_TEMPLATE = """{skill_section}You are the coding agent in a live Claude Code session with a user. The session has the following state:
 
 ## Prior context
@@ -111,6 +110,7 @@ def invoke_agent(prompt: str, model: str | None, timeout: int) -> tuple[str, dic
             errors="replace",
             timeout=timeout,
             env=env,
+            check=False,
         )
     except subprocess.TimeoutExpired:
         return "", {"_error": f"agent timeout after {timeout}s"}
@@ -224,7 +224,7 @@ def main():
         for future in as_completed(futures):
             try:
                 unit, outcome = future.result()
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - boundary catch-all, failure is reported not raised
                 unit = futures[future]
                 outcome = {"status": "error", "error": f"_do raised: {e}"}
             eval_entry, config, run_dir = unit

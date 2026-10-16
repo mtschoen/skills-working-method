@@ -8,8 +8,8 @@ statement. Load it by path instead, the same way it runs in CI.
 import importlib.util
 import json
 import sys
-import xml.etree.ElementTree as ElementTree
 from pathlib import Path
+from xml.etree import ElementTree
 
 import pytest
 

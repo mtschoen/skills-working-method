@@ -37,7 +37,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
 
-
 GRADER_JSON_SCHEMA = """
 {
   "assertions": [
@@ -168,6 +167,7 @@ def invoke_grader(prompt: str, model: str | None, timeout: int) -> dict:
             errors="replace",
             timeout=timeout,
             env=env,
+            check=False,
         )
     except subprocess.TimeoutExpired:
         return {"_error": f"grader timeout after {timeout}s"}
@@ -426,7 +426,7 @@ def main():
             unit = future_map[future]
             try:
                 record = future.result()
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - boundary catch-all, failure is reported not raised
                 record = {
                     "eval_id": unit.eval_id,
                     "eval_name": unit.eval_name,

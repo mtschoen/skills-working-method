@@ -23,7 +23,7 @@ import json
 import os
 import sys
 import urllib.request
-import xml.etree.ElementTree as ElementTree
+from xml.etree import ElementTree
 
 
 def _percent_from_coverage_json(path: str) -> float:
@@ -105,7 +105,7 @@ def main(argv: list[str]) -> int:
             percent = _percent_from_cobertura(arguments.cobertura)
         else:
             percent = _percent_from_coverage_json(arguments.coverage_json)
-    except Exception as error:  # measurement failed -> post error, exit 0
+    except Exception as error:  # measurement failed -> post error, exit 0  # noqa: BLE001 - boundary catch-all, failure is reported not raised
         print(f"coverage measurement failed: {error}", file=sys.stderr)
         _post(arguments.context, "error", "coverage measurement failed")
         return 0
