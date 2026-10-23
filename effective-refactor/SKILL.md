@@ -1,9 +1,18 @@
 ---
 name: effective-refactor
-description: "Use when changing code shape without changing behavior - renaming or deleting symbols, changing signatures, extracting methods or modules, moving code, or converting a data shape - especially when the change must touch many call sites. Triggers: about to hand-edit the same change into several files, a mass rename or API migration, \"update all usages\", removing a widely-used function or config shape, a refactor that keeps breaking distant call sites, or deciding whether a change is too entangled to be a refactor at all."
+description: "Use when changing code shape without changing behavior: renames, signature or data-shape changes, moves, extraction, removal, or repeated edits across call sites. Traverses the reference graph with semantic tools or compiler errors and recognizes when entanglement requires a migration plan."
 ---
 
 # Effective Refactor
+
+## When to use
+
+Use when changing code shape without changing behavior - renaming or deleting symbols, changing
+signatures, extracting methods or modules, moving code, or converting a data shape - especially when
+the change must touch many call sites. Triggers: about to hand-edit the same change into several
+files, a mass rename or API migration, "update all usages", removing a widely-used function or
+config shape, a refactor that keeps breaking distant call sites, or deciding whether a change is too
+entangled to be a refactor at all.
 
 A refactor is a traversal of the code's reference graph, not a pile of text edits.
 The graph is machine-readable - refactoring tools walk it, compilers and type

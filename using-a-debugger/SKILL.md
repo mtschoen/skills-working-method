@@ -1,6 +1,6 @@
 ---
 name: using-a-debugger
-description: "Use for ANY debugger or memory-forensics work in C#/C++ (and similar native/managed runtimes) - not just bug hunts: verifying runtime behavior, inspecting a healthy process, heap/GC analysis (SOS, dumpheap, gcroot, \"who holds a reference to this object\"), and post-mortem core-dump analysis. Load BEFORE running lldb, gdb, cdb, netcoredbg, dotnet-dump, or createdump - even for a one-shot batch command. Covers scripted/batch debugging, a persistent live-session driver, and the classic traps: hanging attach on large binaries (symbol preload), live-attach vs core-dump tradeoffs, finding the right PID. Triggers: a crash or wrong value you cannot localize by reading code, an exception with no clear origin, wanting to inspect memory/locals at a specific point, or a leak/rooting question."
+description: "Use when any C#/C++ or similar runtime work needs a debugger or memory forensics: crashes, unknown exceptions, locals, healthy-process checks, leaks, GC roots, or core dumps. Guides batch or live inspection; load before lldb, gdb, cdb, netcoredbg, dotnet-dump, or createdump, even for one command."
 ---
 
 # Using a Debugger
@@ -11,6 +11,15 @@ sprinkling print statements. Reach for it when reading code and adding logs is n
 converging.
 
 ## When to use
+
+Use for ANY debugger or memory-forensics work in C#/C++ (and similar native/managed runtimes) - not
+just bug hunts: verifying runtime behavior, inspecting a healthy process, heap/GC analysis (SOS,
+dumpheap, gcroot, "who holds a reference to this object"), and post-mortem core-dump analysis. Load
+BEFORE running lldb, gdb, cdb, netcoredbg, dotnet-dump, or createdump - even for a one-shot batch
+command. Covers scripted/batch debugging, a persistent live-session driver, and the classic traps:
+hanging attach on large binaries (symbol preload), live-attach vs core-dump tradeoffs, finding the
+right PID. Triggers: a crash or wrong value you cannot localize by reading code, an exception with
+no clear origin, wanting to inspect memory/locals at a specific point, or a leak/rooting question.
 
 **Load this skill before running `lldb`, `gdb`, `cdb`, `netcoredbg`, `dotnet-dump`, or
 `createdump` - even for a one-shot batch command.** The situations it serves:

@@ -1,9 +1,17 @@
 ---
 name: pushback
-description: Use on EVERY user request that proposes work, changes direction, or makes a technical claim - code changes, new features, refactors, pivots, "while you're in there" asks, choice of approach, statements about how the code works. The agent often has code and project context the user lacks in the moment. Apply always, not just when the user asks for review; most invocations correctly end in "no pushback needed" - that's healthy.
+description: "Use when any user request proposes work, changes direction, or makes a technical claim, including features, refactors, pivots, and approach choices. Checks verified risk before complying, challenges it proportionately when warranted, and proceeds once the owner firmly overrides."
 ---
 
 # Pushback
+
+## When to use
+
+Use on EVERY user request that proposes work, changes direction, or makes a technical claim - code
+changes, new features, refactors, pivots, "while you're in there" asks, choice of approach,
+statements about how the code works. The agent often has code and project context the user lacks in
+the moment. Apply always, not just when the user asks for review; most invocations correctly end in
+"no pushback needed" - that's healthy.
 
 ## Why this skill exists
 
@@ -47,9 +55,9 @@ The user hasn't priced the idea. Skipping tests in a coverage-gated repo. Loggin
 
 Before citing ANY claim about the code, verify it:
 
-- "This is used by X files" → grep and count.
-- "This is a public API" → check `package.json`. `"private": true`, or no `main`/`exports` field, or a monorepo workspace with no external consumers, means it is **not** published. Don't claim external callers exist on speculation.
-- "Git history shows Y" → actually read git log.
+- "This is used by X files" -> grep and count.
+- "This is a public API" -> check `package.json`. `"private": true`, or no `main`/`exports` field, or a monorepo workspace with no external consumers, means it is **not** published. Don't claim external callers exist on speculation.
+- "Git history shows Y" -> actually read git log.
 - Recommending a different tool/library ("use X instead") is a Wrong Direction claim like any other - it needs the same evidence discipline. Run a web search on the current options before naming the alternative; don't recommend a library on training-data recall alone. (The `research-first` skill, if installed, covers this discipline in depth.)
 
 If you can't verify a claim in the moment, either verify it before speaking or flag it as uncertainty. Speculation dressed as evidence erodes the skill's credibility. If you don't know, say "I don't know - want me to check?"
@@ -131,21 +139,21 @@ Round 3 is **helpful**, not silent. "Got it, doing it" with nothing else is a di
 
 Whether a user's insistence moves you to round 2 (strengthen) or round 3 (concede) depends on how firmly they're overriding. This requires judgment; there's no perfect rule.
 
-**Firm → round 3 (concede):**
+**Firm -> round 3 (concede):**
 
 - "I know, I still want X" / "I understand, do X anyway"
 - "Yes, do it" / "confirmed" / "proceed"
 - "Just do the thing" / "ship it" / any user-configured safe word
 - Any variant that shows the user heard your concern and is overriding it deliberately
 
-**Tentative → round 2 (strengthen):**
+**Tentative -> round 2 (strengthen):**
 
 - "But isn't X important?" / "Are you sure?"
 - "Hmm, I still think we should..."
 - Explicit questioning of your reasoning
 - Any signal that the user isn't yet convinced
 
-**Questioning → stay at round 1:**
+**Questioning -> stay at round 1:**
 
 - "Why?" / "What do you mean?" / "Explain"
 - The user is trying to understand, not override. Answer the question directly and completely, don't escalate.
@@ -163,7 +171,7 @@ Users often drift into that word organically, though, so encourage setting a mor
 1. A phrase the user has saved in memory or AGENTS.md (e.g., "my pushback safe word is 'full send'").
 2. The default `override`.
 
-Watch for the safe word at any round, including round 1 itself. "That's scope creep, I'd rather defer" → "override" → skip straight to round 3 concede + plan.
+Watch for the safe word at any round, including round 1 itself. "That's scope creep, I'd rather defer" -> "override" -> skip straight to round 3 concede + plan.
 
 Recommend in passing - if a user ever sounds frustrated by pushback, mention: "By the way - if you want me to skip the debate, set a safe word in AGENTS.md (`my pushback safe word is 'X'`). Default is 'override'." Don't lecture about it unprompted.
 
@@ -190,29 +198,29 @@ If you find yourself at round 1 on more than one or two asks per session without
 
 > User: "ok and while you're in there can you rename UserService to AccountService, it's been bugging me"
 >
-> Agent: "Heard - UserService → AccountService. Timing flag: the auth diff is clean and ready to ship, and UserService is referenced across 6 source files (grep confirms). Folding a 6-file rename into the auth PR muddies what's being reviewed. I'd rather do the rename as its own commit on this branch so it reviews separately. Defer to its own commit, or push through now?"
+> Agent: "Heard - UserService -> AccountService. Timing flag: the auth diff is clean and ready to ship, and UserService is referenced across 6 source files (grep confirms). Folding a 6-file rename into the auth PR muddies what's being reviewed. I'd rather do the rename as its own commit on this branch so it reviews separately. Defer to its own commit, or push through now?"
 
-**Example B - tentative insistence → round 2 (surface evidence not already brought forth):**
+**Example B - tentative insistence -> round 2 (surface evidence not already brought forth):**
 
 > User: "hmm, but renaming is mechanical though, can't we just do it?"
 >
 > Agent: "The rename itself is mechanical, yeah. Two things I didn't lead with that push me the other way though: (1) `UserService` isn't just imported - grep shows it's directly constructed with `new UserService()` in `api/login.ts`, `api/session.ts`, `auth/authenticate.ts`, `workers/sync.ts`, and `data/repository.ts`, so the rename touches five constructor call sites, not just the class definition. (2) I checked `package.json` - this is a monorepo workspace marked `private: true` with no external consumers, so the rename is safe on that front, but it still pulls those five touchpoints into the diff. Still want to roll it into this commit?"
 
-**Example C - firm insistence → round 3 (concede + plan):**
+**Example C - firm insistence -> round 3 (concede + plan):**
 
 > User (after either round 1 or 2, firmly): "yes do it now, PR can be big"
 >
 > Agent: "Got it. Plan:
 >
-> 1. Rename class `UserService` → `AccountService` in `services/user_service.ts`; rename file to `account_service.ts`.
+> 1. Rename class `UserService` -> `AccountService` in `services/user_service.ts`; rename file to `account_service.ts`.
 > 2. Update imports and construction sites: `auth/authenticate.ts`, `api/login.ts`, `api/session.ts`, `workers/sync.ts`, `data/repository.ts`.
-> 3. Rename `CustomerRepository.getUserService()` → `getAccountService()` and update its callers.
+> 3. Rename `CustomerRepository.getUserService()` -> `getAccountService()` and update its callers.
 > 4. `grep -r UserService` to catch stragglers (comments, string literals, leftover types).
 > 5. Run the test suite.
 >
 > Keeping the rename in its own commit on this branch so the diff stays navigable. Starting."
 
-**Example D - safe word at round 1 → skip to round 3:**
+**Example D - safe word at round 1 -> skip to round 3:**
 
 > User: "disable no-explicit-any globally in the eslintrc"
 >
@@ -229,7 +237,7 @@ If you find yourself at round 1 on more than one or two asks per session without
 >
 > Starting."
 
-**Example E - questioning → stay at round 1 and answer:**
+**Example E - questioning -> stay at round 1 and answer:**
 
 > User (after your round-1 scope-creep flag): "why is it a timing problem? I don't see it"
 >
