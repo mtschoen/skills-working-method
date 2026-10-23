@@ -61,8 +61,8 @@ Most questions are a mix; when in doubt, do the web search too.
 "I already know this" is exactly the rationalization that produces
 stale, reinvented, or subtly-wrong work. The cost of one redundant search
 is a few seconds; the cost of a skipped one is building the wrong thing
-on outdated assumptions. So the reminder fires on **every** user prompt
-(see `hooks/prompt-reminder.sh`) and you self-police the "already searched"
+on outdated assumptions. So the reminder fires on **every** owner-typed prompt
+(harness-generated task notifications and teammate messages are skipped; see `hooks/prompt-reminder.sh`) and you self-police the "already searched"
 skip - the hook stays deliberately simple rather than trying to detect
 prior searches.
 

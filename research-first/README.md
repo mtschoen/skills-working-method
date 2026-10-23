@@ -11,7 +11,8 @@ writing custom code, refactoring, or debugging an unfamiliar error.
   search, what counts as a decision vs. user narration, and the one valid
   skip (already searched this session).
 - `hooks/prompt-reminder.sh` - a `UserPromptSubmit` hook that injects the
-  reminder as `additionalContext` on every prompt. Unconditional by
+  reminder as `additionalContext` on every owner-typed prompt (task
+  notifications and teammate messages are skipped). Stateless by
   design; the agent self-polices the "already searched" skip.
 
 ## Install
