@@ -1,6 +1,6 @@
 ---
 name: writing-tests
-description: "Use when about to write, change, parametrize, or delete a test, fixture, or test double, including an integration test or one involving a real process, socket, external service, real home directory, heavy fixture setup, sleep, or timeout; when asserting on elapsed time, call counts, or clock-read order; when changing a flaky, intermittent, or transient test; when near-duplicate tests differ by one literal; when coverage has just reached the bar and the tests the change added have not been consolidated; or when deciding whether a test may be merged or deleted under a coverage ratchet or test-removal gate. Do not use after measured test slowness is blocking the loop or for a suite-wide performance pass; fast-tests owns those."
+description: "Use when writing, changing, parametrizing, merging, or deleting tests, fixtures, or doubles; handling real resources, timing, call counts, flakes, duplicates, consolidation, or removal gates. Removes uncontrolled dependencies and preserves meaningful coverage; fast-tests owns measured slow loops and suite performance."
 ---
 
 # Writing Tests
@@ -29,6 +29,15 @@ that reaches for an existing test before a new one, a consolidation pass before
 declaring done, and a periodic census.
 
 ## When to use
+
+Use when about to write, change, parametrize, or delete a test, fixture, or test double, including
+an integration test or one involving a real process, socket, external service, real home directory,
+heavy fixture setup, sleep, or timeout; when asserting on elapsed time, call counts, or clock-read
+order; when changing a flaky, intermittent, or transient test; when near-duplicate tests differ by
+one literal; when coverage has just reached the bar and the tests the change added have not been
+consolidated; or when deciding whether a test may be merged or deleted under a coverage ratchet or
+test-removal gate. Do not use after measured test slowness is blocking the loop or for a suite-wide
+performance pass; fast-tests owns those.
 
 - Covering new behavior, or guarding a fix you are about to make.
 - Coverage just reached the bar and you are about to declare done.

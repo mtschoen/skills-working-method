@@ -1,6 +1,6 @@
 ---
 name: fast-tests
-description: "Use when the agent observes slow test runs in this session: multi-minute wall clock, repeated re-runs blocking iteration, tests dominating the inner loop, thousands of subprocess spawns, or coverage/instrumentation overhead. Do not use merely because a test being authored is an integration test or involves sleeps, timeouts, external services, or fixture-heavy setup; writing-tests owns authoring until measured slowness blocks the loop."
+description: "Use when measured slow test runs block iteration: multi-minute runs, repeated waits, subprocess volume, or coverage overhead. Profiles the bottleneck and speeds setup without weakening integration checks; writing-tests owns test authoring until measured slowness blocks the loop."
 ---
 
 # Fast Tests
@@ -12,6 +12,12 @@ None of those show up in unit tests.
 This skill reinforces that bias and gives the agent techniques to make integration tests cheap enough that they ARE the fast path.
 
 ## When to use
+
+Use when the agent observes slow test runs in this session: multi-minute wall clock, repeated
+re-runs blocking iteration, tests dominating the inner loop, thousands of subprocess spawns, or
+coverage/instrumentation overhead. Do not use merely because a test being authored is an integration
+test or involves sleeps, timeouts, external services, or fixture-heavy setup; writing-tests owns
+authoring until measured slowness blocks the loop.
 
 - You're in a session and the test run wall clock is multi-minute - every fix-and-rerun cycle is blocked by waiting.
 - Repeated re-runs are dominating the inner loop: you fix one thing, re-run, wait, fix another, re-run, wait.
@@ -55,7 +61,7 @@ The cue you're looking for is not "which test is slow" but "which *phase* of whi
 fixture setup, teardown, or body.
 
 1. **Profile shows setup / fixtures heavy (>40% of wall clock in fixture code, database migrations,
-   or test wiring)** → amortize the expensive setup across the maximum number of tests.
+   or test wiring)** -> amortize the expensive setup across the maximum number of tests.
    The goal is to pay the expensive setup cost once and let many tests share the result.
    For pytest this means session-scoped or module-scoped fixtures; for JUnit 5 this means
    `@TestInstance(Lifecycle.PER_CLASS)` + `@BeforeAll`; for xUnit this means `IClassFixture`
@@ -65,7 +71,7 @@ fixture setup, teardown, or body.
    daemon - that's a persistent environment: see `references/persistent-environments.md`.
 
 2. **Profile shows cold-start downloads or first-run compilation eating time (model weights,
-   package caches, JIT warm-up, emulator first-boot)** → prime the cache before the suite runs.
+   package caches, JIT warm-up, emulator first-boot)** -> prime the cache before the suite runs.
    Warm once, reuse many.
    The key distinction: cold-start costs are one-time per environment, not one-time per test -
    so the fix is environment-level, not fixture-level.
@@ -73,7 +79,7 @@ fixture setup, teardown, or body.
    emulator snapshot, a Python `.pth` that pre-imports the heavy module.
    See `references/pre-warming.md`.
 
-3. **Profile shows sequential runs, low CPU utilization, and no shared mutable state** →
+3. **Profile shows sequential runs, low CPU utilization, and no shared mutable state** ->
    run tests in parallel.
    Pytest-xdist, Gradle parallel test execution, xUnit parallel collections.
    The speedup is proportional to the number of workers you can run without resource conflicts;
@@ -84,7 +90,7 @@ fixture setup, teardown, or body.
    See `references/parallelism.md`.
 
 4. **Profile shows one or a handful of specific slow tests (explicit `sleep()`, network timeout,
-   polling loop)** → reduce or eliminate the sleep.
+   polling loop)** -> reduce or eliminate the sleep.
    The common forms: a `sleep(5)` that waits for an async event (replace with polling + timeout
    or an event/signal); a network call with a 30-second default timeout (reduce or replace with
    a mock at the socket boundary); a polling loop waiting for a condition (replace with a callback
@@ -96,7 +102,7 @@ fixture setup, teardown, or body.
    See `references/pitfalls.md` for the full anti-pattern catalogue.
 
 5. **Profile shows process or resource leaks (tests getting slower over the run, leftover daemons,
-   port conflicts, memory growing)** → kill leaked processes and restore isolation between tests.
+   port conflicts, memory growing)** -> kill leaked processes and restore isolation between tests.
    The symptom is a suite that passes when run in isolation but gets slower or flakier as the run
    progresses.
    The cause is usually a test that starts a subprocess, opens a socket, or acquires a resource
@@ -106,7 +112,7 @@ fixture setup, teardown, or body.
    See `references/process-cleanup.md`.
 
 6. **Suite mixes wall-clock-fast and wall-clock-slow tests, and the slow subset is blocking the
-   iteration loop** → tier the suite by wall clock.
+   iteration loop** -> tier the suite by wall clock.
    Fast tier runs on every save or test command; slow tier runs pre-commit, in CI, and before
    claiming done.
    The threshold is a choice - 500ms is a reasonable starting point - and it belongs in the
@@ -117,7 +123,7 @@ fixture setup, teardown, or body.
 
 7. **Profile shows subprocess spawn volume dominating (hundreds to thousands of short-lived
    processes - git, CLI tools, compilers - workers I/O-blocked on process creation, low CPU
-   despite parallelism already being on)** → census the spawns, then do less of them.
+   despite parallelism already being on)** -> census the spawns, then do less of them.
    Instrument the project's sanctioned subprocess chokepoint (the wrapper module all calls
    route through) to record argv, cwd, and the calling stack per spawn for one suite run -
    stack attribution separates fixture spawns from production-code spawns for free.
@@ -132,7 +138,7 @@ fixture setup, teardown, or body.
 
 8. **Profile or census shows redundant tests (many tests through the same path differing by
    one input, several tests repeating the same act, tests whose only assertion is that a mock
-   was called for an incidental interaction, tests of code verified internally unreachable)** → fold or delete them.
+   was called for an incidental interaction, tests of code verified internally unreachable)** -> fold or delete them.
    Removing a redundant test is not skipping a test: the behavior stays asserted, by fewer
    functions.
    Hand off to `writing-tests`, which owns the consolidation moves and the safe-deletion
@@ -288,7 +294,7 @@ fast-tests trade-off.
 `smoke-test` is the outer-loop verify: "does the product work after this change?"
 Fast-tests is the inner-loop mechanic: "how quickly can I re-verify during development?"
 No overlap.
-Both share the underlying premise that tests passing ≠ product working unless the tests are
+Both share the underlying premise that tests passing != product working unless the tests are
 actually exercising the product.
 
 **`escalate-over-shortcut`** - partner skill for when no

@@ -1,9 +1,17 @@
 ---
 name: running-spikes
-description: "Use when about to do extended Read/Grep/thinking on a question whose answer is observable behavior of an external system, library, framework, or runtime - prefer learning from running code in a scratch dir over inferring from docs. Suppressed when the question is about THIS codebase, is subjective/design, or has already been spiked (check ~/.agents/memories/spike_*.md first). Fires phase-agnostically - during brainstorming, plan-writing, AND mid-implementation."
+description: "Use when extended reading or thinking could be replaced by a small experiment on observable behavior of an external system, library, framework, or runtime. Prefers running a scratch probe in any work phase, excluding this codebase, subjective design, and questions already spiked."
 ---
 
 # Running Spikes
+
+## When to use
+
+Use when about to do extended Read/Grep/thinking on a question whose answer is observable behavior
+of an external system, library, framework, or runtime - prefer learning from running code in a
+scratch dir over inferring from docs. Suppressed when the question is about THIS codebase, is
+subjective/design, or has already been spiked (check ~/.agents/memories/spike_*.md first). Fires
+phase-agnostically - during brainstorming, plan-writing, AND mid-implementation.
 
 ## Why this skill exists
 
@@ -21,7 +29,7 @@ Fires when the agent catches itself reaching for one of these defaults:
 - "Let me grep across other projects for how this is usually done."
 - "Let me think through whether Y will work."
 
-…AND the question is about **observable behavior of an external system** (library, framework, runtime, host environment, third-party API) AND a small experiment could produce a definitive answer.
+...AND the question is about **observable behavior of an external system** (library, framework, runtime, host environment, third-party API) AND a small experiment could produce a definitive answer.
 
 (Web-search is a natural fourth signal but is parked - the `research-first` skill's prompt-submit hook, if installed, already pushes the agent toward WebSearch on design / planning prompts; pairing the spike skill on that signal would over-fire. The three signals above carry the action-bias for now. Division of labor: research-first is *look it up*; this skill is *run it and observe*.)
 
@@ -29,10 +37,10 @@ Fires when the agent catches itself reaching for one of these defaults:
 
 Before firing, silently answer. If any is "yes," don't spike - fall back to the original instinct.
 
-1. **Is this about THIS codebase?** → Read the code or write a test against it. Spike scope is for external/unknown systems.
-2. **Is the answer subjective / a design opinion?** → No experiment can resolve "which feels nicer." Reason it out.
-3. **Have I (or have past sessions) already spiked this?** → Check `~/.agents/memories/spike_registry.md` first, then glob `~/.agents/memories/spike_*.md`. If found, cite and skip.
-4. **Did the user just say "just answer"?** → Last-message override beats the skill.
+1. **Is this about THIS codebase?** -> Read the code or write a test against it. Spike scope is for external/unknown systems.
+2. **Is the answer subjective / a design opinion?** -> No experiment can resolve "which feels nicer." Reason it out.
+3. **Have I (or have past sessions) already spiked this?** -> Check `~/.agents/memories/spike_registry.md` first, then glob `~/.agents/memories/spike_*.md`. If found, cite and skip.
+4. **Did the user just say "just answer"?** -> Last-message override beats the skill.
 
 Note: "authoritative docs exist" is deliberately NOT a suppression gate. Even when docs exist, prefer running code to reading. Reinforces the bias toward action.
 
@@ -67,10 +75,10 @@ Ask format:
 
 **Location precedence:**
 
-1. If cwd is a git repo → `.agents/spikes/<slug>/` in repo root, gitignored. Skill adds `.agents/spikes/` to `.gitignore` if missing (one-line in-place change, bundled into the spike setup).
-2. Otherwise → `~/.agents/spikes/<slug>/`.
+1. If cwd is a git repo -> `.agents/spikes/<slug>/` in repo root, gitignored. Skill adds `.agents/spikes/` to `.gitignore` if missing (one-line in-place change, bundled into the spike setup).
+2. Otherwise -> `~/.agents/spikes/<slug>/`.
 
-**Slug:** kebab-case, 2–4 words. `httpx-redirect-schemes`, `unity-batch-mode-exit-codes`. On collision (a slug already exists), append a date suffix (e.g., `-20260508`).
+**Slug:** kebab-case, 2-4 words. `httpx-redirect-schemes`, `unity-batch-mode-exit-codes`. On collision (a slug already exists), append a date suffix (e.g., `-20260508`).
 
 **Hygiene:** spike code is exempt from TDD, smoke-test, maintaining-full-coverage, and verification-before-completion (see "Exemptions" below). Happy path only. Sloppy is fine. The spike's only verification is "did the code run and produce the answer."
 
@@ -109,7 +117,7 @@ The bar is low - it's a breadcrumb for future-you. Always written.
 
 Curated index of spikes whose answers are likely to recur. Per-topic notes live alongside as `spike_<slug>.md`; only the cross-context-useful ones get an entry here.
 
-- 2026-05-07 - [httpx redirect schemes](spike_httpx-redirect-schemes.md) - httpx follows http→https but NOT https→http by default; needs custom transport
+- 2026-05-07 - [httpx redirect schemes](spike_httpx-redirect-schemes.md) - httpx follows http->https but NOT https->http by default; needs custom transport
 - 2026-05-03 - [unity batch-mode exit codes](spike_unity-batch-mode-exit-codes.md) - exit 1 on compile error, 2 on test failure, 3 on Editor crash; 0 only on full success
 ```
 
@@ -121,8 +129,8 @@ After the spike concludes, silently answer:
 
 > "Would this spike's answer help me on a different project / different file / different task in the future?"
 
-- **Yes** → append a registry line. (Generally useful: library quirks, runtime behavior, host-environment facts, framework gotchas.)
-- **No** → leave as note-only. (Project-specific: how *this* particular service's auth flow works, what *this* schema looks like.)
+- **Yes** -> append a registry line. (Generally useful: library quirks, runtime behavior, host-environment facts, framework gotchas.)
+- **No** -> leave as note-only. (Project-specific: how *this* particular service's auth flow works, what *this* schema looks like.)
 
 Not gated on user approval. Cheap, append-only, easy to prune later.
 
@@ -130,10 +138,10 @@ Not gated on user approval. Cheap, append-only, easy to prune later.
 
 Before firing on a topic, in order:
 
-1. Grep `~/.agents/memories/spike_registry.md` for keywords. Hit → cite the line, follow the link to the per-topic note, skip the spike.
-2. Glob `~/.agents/memories/spike_*.md`. Filename or content match → read the note, skip.
+1. Grep `~/.agents/memories/spike_registry.md` for keywords. Hit -> cite the line, follow the link to the per-topic note, skip the spike.
+2. Glob `~/.agents/memories/spike_*.md`. Filename or content match -> read the note, skip.
 3. Check earlier turns of this conversation for in-flight findings the user chose not to register.
-4. No hit anywhere → proceed.
+4. No hit anywhere -> proceed.
 
 ## Promotion mechanic
 
@@ -166,13 +174,13 @@ All re-engage on promotion.
 
 **Example A - small spike, announce-and-go (during design):**
 
-> User: "I'm thinking about using `httpx` for the new client. Will it follow redirects across http→https and back?"
+> User: "I'm thinking about using `httpx` for the new client. Will it follow redirects across http->https and back?"
 >
 > Agent: "I could read docs but the cleanest way to know is to run it. Spiking on httpx redirect behavior - single-file probe at `.agents/spikes/httpx-redirect-schemes/probe.py`, ~30 seconds.
 >
 > [runs the probe, observes behavior]
 >
-> Result: with `follow_redirects=True`, httpx follows http→https but NOT https→http by default - security guardrail. To allow it, you build a custom transport. Note saved at `~/.agents/memories/spike_httpx-redirect-schemes.md` and registered (likely to recur). For your client: do you actually need https→http, or is the default safe?"
+> Result: with `follow_redirects=True`, httpx follows http->https but NOT https->http by default - security guardrail. To allow it, you build a custom transport. Note saved at `~/.agents/memories/spike_httpx-redirect-schemes.md` and registered (likely to recur). For your client: do you actually need https->http, or is the default safe?"
 
 **Example B - medium+ spike, ask first (mid-implementation):**
 
@@ -190,7 +198,7 @@ All re-engage on promotion.
 
 > User: "I'm wondering about httpx redirect behavior across schemes."
 >
-> Agent: "Already spiked this on 2026-05-07 - see `~/.agents/memories/spike_httpx-redirect-schemes.md`. TL;DR: `follow_redirects=True` follows http→https but not https→http by default; needs a custom transport for the latter. Working from that, do you want the default or the custom transport?"
+> Agent: "Already spiked this on 2026-05-07 - see `~/.agents/memories/spike_httpx-redirect-schemes.md`. TL;DR: `follow_redirects=True` follows http->https but not https->http by default; needs a custom transport for the latter. Working from that, do you want the default or the custom transport?"
 
 **Example E - promotion offer:**
 

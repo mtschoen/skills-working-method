@@ -1,9 +1,16 @@
 ---
 name: filing-issues
-description: Use when about to open an issue, ticket, or follow-up on a forge (Gitea, GitHub, GitLab) for something observed during work - a failed job, a wrong review, a flaky gate, a loose end at session close, a "we should" noticed mid-task. Also use when triaging or rewriting an issue someone else filed. Fires before the create call, not after.
+description: "Use when opening a forge issue, ticket, or follow-up for an observation during work, or triaging or rewriting an existing issue. Routes small fixes to immediate repair and repeat sightings to existing issues, then requires mechanism or incident evidence before the create call."
 ---
 
 # filing-issues - tie the sighting to its mechanism
+
+## When to use
+
+Use when about to open an issue, ticket, or follow-up on a forge (Gitea, GitHub, GitLab) for
+something observed during work - a failed job, a wrong review, a flaky gate, a loose end at session
+close, a "we should" noticed mid-task. Also use when triaging or rewriting an issue someone else
+filed. Fires before the create call, not after.
 
 An issue is either a claim that a specific mechanism is wrong, or an
 incident report: something happened, here is exactly where and when.

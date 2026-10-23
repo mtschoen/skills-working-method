@@ -1,9 +1,20 @@
 ---
 name: using-a-decompiler
-description: "Use when the only way to answer a question about code is to read a compiled artifact: a .NET assembly, a native executable or shared library, a Unity player, or an editor or engine binary. Load BEFORE running ilspycmd, ildasm, monodis, Ghidra, objdump, dumpbin, or Cpp2IL, even for a one-line listing, and before answering a question that would require one of them. Triggers: no source for a dependency that crashes or misbehaves, a vendor claim to confirm, an interoperability question about a format or protocol, a question about what an installed program actually does, a request to peek inside a third-party or commercial binary, a Unity Mono or IL2CPP build to inspect, an obfuscated or stripped binary, or an agent about to guess what a binary does from its name."
+description: "Use when answering a code question requires reading a source-unavailable .NET, native, or Unity binary. Checks source and authorization, then guides narrow static inspection; load before ilspycmd, ildasm, monodis, Ghidra, objdump, dumpbin, or Cpp2IL, even for a one-line listing."
 ---
 
 # Using a Decompiler
+
+## When to use
+
+Use when the only way to answer a question about code is to read a compiled artifact: a .NET
+assembly, a native executable or shared library, a Unity player, or an editor or engine binary. Load
+BEFORE running ilspycmd, ildasm, monodis, Ghidra, objdump, dumpbin, or Cpp2IL, even for a one-line
+listing, and before answering a question that would require one of them. Triggers: no source for a
+dependency that crashes or misbehaves, a vendor claim to confirm, an interoperability question about
+a format or protocol, a question about what an installed program actually does, a request to peek
+inside a third-party or commercial binary, a Unity Mono or IL2CPP build to inspect, an obfuscated or
+stripped binary, or an agent about to guess what a binary does from its name.
 
 A decompiler reads what a compiled artifact does when no source is in hand. The first step is
 deciding whether that reading is yours to do; the second is picking the tool the artifact calls

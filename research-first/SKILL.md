@@ -1,9 +1,17 @@
 ---
 name: research-first
-description: Use before designing, planning, writing custom code, refactoring/extracting code, choosing a tool/library/protocol, or debugging an unfamiliar error. Steers toward running a WebSearch (or Read/Grep for codebase-only questions) BEFORE acting on a decision, instead of inferring from training data. Fires on decisions the agent faces, not on user narration of what they are about to do.
+description: "Use when facing a decision before design, planning, custom code, refactoring, tool or protocol selection, or debugging an unfamiliar error. Requires a web search, or Read/Grep for codebase-only questions, before acting; user narration does not trigger it."
 ---
 
 # research-first - search before you decide
+
+## When to use
+
+Use before designing, planning, writing custom code, refactoring/extracting code, choosing a
+tool/library/protocol, or debugging an unfamiliar error. Steers toward running a WebSearch (or
+Read/Grep for codebase-only questions) BEFORE acting on a decision, instead of inferring from
+training data. Fires on decisions the agent faces, not on user narration of what they are about to
+do.
 
 Your training data is stale and lossy. For most design and tooling
 decisions there is a maintained library, an official doc, or a recent
@@ -30,10 +38,10 @@ Most questions are a mix; when in doubt, do the web search too.
 
 ## What counts, what doesn't
 
-- **A decision you face** → search. "What's the right way to rate-limit
+- **A decision you face** -> search. "What's the right way to rate-limit
   this?" / "Is there a maintained client for this API?" / "Why does this
   error happen?" all trigger a search.
-- **User narration** → absorb as context, don't search. If the user is
+- **User narration** -> absorb as context, don't search. If the user is
   *stating what they are about to do* ("I'm going to add a cache here")
   rather than *asking how*, take it as a given and move on.
 - **Listing search terms does not count.** "I would search for X" is the
@@ -67,7 +75,7 @@ This skill is *look it up* - a search or doc read, seconds, stateless. When the 
 **Triggers a search:**
 > User: "Let's add retry-with-backoff to the HTTP client."
 > Agent: [WebSearch for the language's maintained retry/backoff libraries
-> and current best practice] → then proposes using one instead of
+> and current best practice] -> then proposes using one instead of
 > hand-rolling.
 
 **Does not trigger (narration):**

@@ -1,9 +1,18 @@
 ---
 name: fixing-desktop-ui-bugs
-description: "Use when a bug lives in a desktop GUI (WinUI 3, .NET MAUI, WPF, Avalonia, Win32) and reproducing, diagnosing, or verifying it means driving the running app on a machine someone is sitting at, when the report says a control is the wrong size, clipped, blank, or misaligned, or that it happens 'sometime during a session' with no known trigger, when the crew parked it as needs-operator or attended-only, and before reaching for computer use, SendInput, SetForegroundWindow, a process kill, or asking the owner to click."
+description: "Use when desktop GUI bugs need a running app: clipped, blank, misaligned controls, unknown session triggers, or needs-operator reports; before computer use, synthetic input, process kills, or asking the owner to click. Reproduces transitions and verifies measured fixes without taking over the desktop."
 ---
 
 # Fixing desktop UI bugs
+
+## When to use
+
+Use when a bug lives in a desktop GUI (WinUI 3, .NET MAUI, WPF, Avalonia, Win32) and reproducing,
+diagnosing, or verifying it means driving the running app on a machine someone is sitting at, when
+the report says a control is the wrong size, clipped, blank, or misaligned, or that it happens
+'sometime during a session' with no known trigger, when the crew parked it as needs-operator or
+attended-only, and before reaching for computer use, SendInput, SetForegroundWindow, a process kill,
+or asking the owner to click.
 
 A layout bug is fixed when a measurement taken from the running app says so, before and after. The whole skill is about getting that measurement without a human at the keyboard and without touching the keyboard they are using.
 
