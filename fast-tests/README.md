@@ -35,6 +35,7 @@ fast-tests/
     process-cleanup.md              snapshot-then-kill-tree + ppid tracking
     tiering.md                      wall-clock-based tagging
     pitfalls.md                     cross-cutting anti-patterns
+    verified-fakes.md               verified fakes for owned test seams
   evals/                            pushback-style eval harness (dev-only)
   workspace/                        eval scratch + canned mock_repo (dev-only)
 ```

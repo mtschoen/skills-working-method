@@ -1,0 +1,50 @@
+{
+  "tasks": {
+    "project-maintenance": {
+      "runs": [
+        {
+          "automated": [
+            {
+              "action": "Record the maintenance run directly because the repository is not registered with project-tracker",
+              "detail": ".maintenance.json",
+              "kind": "maintenance_breadcrumb"
+            },
+            {
+              "action": "Add the LF checkout rule for shell scripts",
+              "detail": ".gitattributes; ci/baked-toolchain.sh; research-first/hooks/prompt-reminder.sh",
+              "kind": "clean_init_gitattributes_missing"
+            },
+            {
+              "action": "Restore the package license referenced by the README",
+              "detail": "writing-tests/LICENSE",
+              "kind": "docs_content_drift"
+            },
+            {
+              "action": "Add the existing verified-fakes reference to the documented layout",
+              "detail": "fast-tests/README.md; fast-tests/references/verified-fakes.md",
+              "kind": "docs_content_drift"
+            }
+          ],
+          "head": "c4dea69d75ae5810c0b9ea3c177584d275cf8dc6",
+          "rejected": [
+            {
+              "action": "Do not duplicate tracked eval bytecode removal",
+              "detail": "pushback/evals/__pycache__/grade.cpython-313.pyc; pushback/evals/__pycache__/run.cpython-313.pyc",
+              "kind": "tracked_eval_bytecode",
+              "reason": "Open PR #23 already contains removal commit bcd7a6699359db39b705c149de239f062ccdd018"
+            },
+            {
+              "action": "Leave optional agent hooks, aislop, and post-clean init scripts unconfigured",
+              "detail": ".claude/settings.json; .aislop/config.yml; init.ps1; init.bat; init.sh",
+              "kind": "optional_tooling",
+              "reason": "The repository has no demonstrated restore work or quality-gap evidence that warrants new permanent tooling responsibilities"
+            }
+          ],
+          "timestamp": "2026-11-06T00:31:10Z",
+          "user_authorized": []
+        }
+      ]
+    }
+  },
+  "version": 1
+}
