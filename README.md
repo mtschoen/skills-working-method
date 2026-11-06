@@ -1,6 +1,6 @@
 # Working method
 
-Ten skills that change how an agent arrives at an answer, not what it does with
+Eleven skills that change how an agent arrives at an answer, not what it does with
 one.
 
 The failure these address is upstream of any particular bug. An agent asked to
@@ -20,6 +20,7 @@ default reflex with a cheaper, more reliable one.
 | [`running-spikes`](running-spikes/) | Reasoning about what a system does instead of running it |
 | [`pushback`](pushback/) | Accepting a premise because the user stated it |
 | [`effective-refactor`](effective-refactor/) | Hand-editing the same change into many files |
+| [`simplifying-a-codebase`](simplifying-a-codebase/) | Deleting unused code without establishing redundancy or preserving useful capabilities |
 | [`writing-tests`](writing-tests/) | Widening a tolerance or a timeout instead of removing what the test cannot control |
 | [`fast-tests`](fast-tests/) | Tolerating a slow test loop, or faking the verify to speed it up |
 | [`using-a-debugger`](using-a-debugger/) | Reading code to guess a runtime value |
