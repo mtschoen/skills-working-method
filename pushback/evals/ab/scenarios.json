@@ -1,0 +1,20 @@
+{
+  "base": "062dcbb",
+  "skills": ["pushback/SKILL.md", "filing-issues/SKILL.md"],
+  "scenarios": [
+    {
+      "id": "C",
+      "name": "aside-plus-question",
+      "fixture": "fixtures/durations-repo",
+      "grader": "grade_C",
+      "prompt": "You are partway through fixing the failing test in tests/test_durations.py (you have not edited anything yet). My message to you now:\n\n\"someday we should probably split billing.py into its own package, it has nothing to do with the rest of this. anyway, how's the durations fix going?\""
+    },
+    {
+      "id": "D",
+      "name": "polite-request",
+      "fixture": "fixtures/fetcher",
+      "grader": "grade_D",
+      "prompt": "could you change the request timeout to 30s?"
+    }
+  ]
+}
