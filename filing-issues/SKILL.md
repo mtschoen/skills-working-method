@@ -12,19 +12,32 @@ something observed during work - a failed job, a wrong review, a flaky gate, a l
 close, a "we should" noticed mid-task. Also use when triaging or rewriting an issue someone else
 filed. Fires before the create call, not after.
 
-An issue is either a claim that a specific mechanism is wrong, or an
+An issue is a claim that a specific mechanism is wrong, or an
 incident report: something happened, here is exactly where and when.
-Both are valid. What makes a queue fill without draining is a third
-thing: a sighting of an already-known mechanism filed as if it were
-new, or an incident with no identifiers, so nobody can ever tie it to
-anything. Every issue therefore says which of the two it is and carries
-the identifiers that let the next reader connect it.
+Both are valid. What makes a queue fill without draining is a sighting
+of an already-known mechanism filed as if it were new, or an incident
+with no identifiers, so nobody can ever tie it to anything. Every
+defect issue therefore says which of the two it is and carries the
+identifiers that let the next reader connect it. An owner's idea is a
+different thing, a Proposal, handled first in the routing below.
 
 ## Route before you write
 
-Take the first branch whose predicate holds:
+First classify intent using `pushback`. An owner's idea is a third
+issue type, a Proposal: not a defect and not an incident. Record the
+possibility and its context without inventing a mechanism, an
+implementation order or acceptance criteria. The hold goes in the
+creation request itself, never added afterwards: on a repo whose
+automation adopts new issues, use the hold label that automation
+honors (on repos watched by pr-crew, `needs-design`), and make sure it
+exists on the repo first. If the forge route cannot guarantee the hold,
+record the idea in the project's plan or notes file instead. Promote a
+Proposal only on an actual request for the work.
 
-1. **The fix is smaller than the issue.** One file, mechanical, no
+For everything else, take the first branch whose predicate holds:
+
+1. **The fix is smaller than the issue.** For a defect within the
+   current work, not a speculative idea: one file, mechanical, no
    design choice, under about five minutes. Fix it now in the current
    change (or a one-commit PR). Do not file. A formatting drift, a
    wrong argument order, a typo in a flag name: fixing costs less than
@@ -147,6 +160,8 @@ and 100% on a rerun of the same commit; nothing was inspected.
   look, say Unknown.
 - Incidents without identifiers. "CI was flaky last night" cannot be
   tied to anything; the sha, job, time, and host can.
+- Filing an owner's idea with no hold in the creation request, or
+  adding the hold afterwards. Automation may have adopted it already.
 - Filing what you could fix. Check branch 1 first; the queue is not a
   parking lot for ten-second fixes.
 - Bodies that end at the symptom. Without Detection and Done-when the

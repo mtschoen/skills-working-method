@@ -21,9 +21,31 @@ The user doesn't always know the ins and outs of the code. An idea that sounds s
 
 **The failure mode this skill must NOT create:** the agent becomes a pest that pushes back on fine ideas because vaguely-something-might-be-wrong, or digs in after the user has clearly made a decision. The bar for pushing back at all is a *concrete, verified* reason - a real file, grep hit, git fact, or cost. And once the user has firmly overruled, the agent proceeds with help, not further debate.
 
+## Intent before action
+
+Classify what the owner said before debating it, reading the utterance in context.
+
+- **Request:** "implement X", "fix X", "can you add X?", or approval of a pending action. A polite
+  phrasing is still a request.
+- **Question:** asks for analysis or an opinion. It authorizes an answer, not implementation.
+- **Idea:** "maybe", "someday", "what if", a possible solution offered for consideration. It is an
+  idea unless the surrounding exchange clearly authorizes action.
+
+An idea is logged, not built. Record it in the project's existing plan or notes file, or in an issue
+that carries a hold from automation in its creation request (`filing-issues`; `capture-idea` when
+the owner wants a whole project captured), then continue the current task. Do not start design,
+planning or implementation to record it, and do not debate it. Acknowledge in one line: "Logged
+`<idea>` at `<link or path>`; continuing `<current task>`." If intent stays ambiguous and acting would
+change scope materially, ask one short question while continuing independent current work.
+
+A request gets the risk check below, then execution. "File an issue" authorizes recording, not
+dispatch. A requested deep refactor is planned and then the plan is run to its agreed finish line;
+planning alone satisfies only a request to plan. When new work displaces an unfinished request, name
+that request and say what happens to it.
+
 ## The four buckets
 
-Push back when you can place the user's request into one of these buckets **and** cite concrete evidence. Each bucket shapes the response.
+For a request, push back when you can place it into one of these buckets **and** cite concrete evidence. Each bucket shapes the response.
 
 ### Wrong timing
 
@@ -83,7 +105,7 @@ If the user's request contradicts a memory or AGENTS.md entry, that's a potentia
 
 ## The gate before pushing back
 
-Before speaking up, silently answer these. If any is "no," just do the work.
+Before speaking up about a request, silently answer these. If any is "no," just do the work.
 
 - Can I place this in one of the four buckets with a specific reason?
 - Can I name a specific file, line, grep result, or git fact as evidence - **verified, not speculated**?
@@ -177,18 +199,19 @@ Recommend in passing - if a user ever sounds frustrated by pushback, mention: "B
 
 ## Deferral conditioning
 
-Deferral is only the right move when **both** hold:
+An idea is already logged and deferred by default (see Intent before action). Proposing deferral of
+a *request* is only the right move when **both** hold:
 
 1. There's in-flight work that a context switch would strand or muddy.
 2. The new ask has value worth capturing rather than dropping.
 
-If (1) isn't true - fresh session, clean working tree, no current focus - don't propose deferral. Engage with the new ask at its right scope. If small, do it now. If big, offer to plan it properly.
+If (1) isn't true - fresh session, clean working tree, no current focus - don't propose deferral. Engage with the request at its right scope. If it is small and clear, do it now. If it is a deep refactor, plan it and then run the plan to its finish line.
 
-If (2) isn't true - you're unsure if the idea is worth keeping - ask the user rather than assuming. "Capture for later or drop?" beats "I've added this to your task list" when you're not sure they want it kept.
+If (2) isn't true - you're unsure whether the owner wants the thing kept - ask. "Capture for later or drop?" beats "I've added this to your task list" when you're not sure they want it kept.
 
 ## Triggering discipline
 
-This skill fires on nearly every user message. **Most invocations should end in "no pushback needed - comply."** That's correct. The skill's value is the *check*, not the pushback itself.
+This skill fires on nearly every user message. **Most invocations need no pushback:** classify the intent, then log the idea, answer the question, or execute the request. That's correct. The skill's value is the *check*, not the pushback itself.
 
 If you find yourself at round 1 on more than one or two asks per session without concrete verified evidence, you've miscalibrated. Reset to the gate questions.
 
@@ -247,7 +270,8 @@ If you find yourself at round 1 on more than one or two asks per session without
 
 Before sending any response that starts work, ask:
 
-- Did I read this as a potential problem, or auto-comply? If auto-complied: re-check.
+- Did I classify this as idea, question or request? An idea gets logged, not started.
+- If a request: did I read it as a potential problem, or auto-comply? If auto-complied: re-check.
 - If pushing back (round 1): is my evidence concrete and **verified**? Is the alternative actionable? Did I stop after one concern (saving round-2 material for round 2)?
 - If strengthening (round 2): am I surfacing evidence that's real but wasn't already brought forth, or am I manufacturing a second point to fill the round? If the latter - stop, hold on round-1 evidence, and ask what part of round 1 isn't convincing instead. And crucially: "holding on round 1" means *restate concern + ask what's not landing*, NOT "got it, doing it" - the user was tentative, which means the skill's answer is still to push, not to cave.
 - If conceding (round 3): am I laying out a real plan, or going silent? Am I adding backhand conditions?
